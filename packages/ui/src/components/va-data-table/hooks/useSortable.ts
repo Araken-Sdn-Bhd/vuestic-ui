@@ -13,21 +13,23 @@ import type {
 export const useSortableProps = {
   ...useThrottleProps,
   sortBy: { type: String as PropType<string | undefined> },
-  sortingOrder: { type: String as PropType<DataTableSortingOrder | undefined> },
+  columnSorted: { type: Object as PropType<any | undefined> },
+  sortingOrder: { type: [String, null] as PropType<DataTableSortingOrder | undefined> },
+  disableClientSideSorting: { type: Boolean, default: false },
 }
 
 export type TSortedArgs = { sortBy: string, sortingOrder: DataTableSortingOrder, items: DataTableItem[], itemsIndexes: number[] }
 
-export type TSortableEmits = (
+export type TSortableEmits = ((
   event: 'update:sortBy' | 'update:sortingOrder' | 'sorted',
   args: string | DataTableSortingOrder | TSortedArgs,
-) => void
+) => void) & ((event: 'columnSorted', args: { columnName: string, value: DataTableSortingOrder, column: DataTableColumnInternal }) => void)
 
-export type TSortIcon = 'va-arrow-up' | 'va-arrow-down' | 'unfold_more'
+export type TSortIcon = 'va-sort-asc' | 'va-sort-desc' | 'va-unsorted'
 
-export const useSortable = (
+export const useSortable = <Item extends DataTableRow>(
   columns: Ref<DataTableColumnInternal[]>,
-  filteredRows: Ref<DataTableRow[]>,
+  filteredRows: Ref<Item[]>,
   props: ExtractPropTypes<typeof useSortableProps>,
   emit: TSortableEmits,
 ) => {
@@ -69,10 +71,37 @@ export const useSortable = (
     },
   })
 
+  const defaultSortingFn = (a: unknown, b: unknown) => {
+    if (typeof a === 'string' && typeof b === 'string') {
+      return a.localeCompare(b)
+    }
+
+    if (typeof a === 'number' && typeof b === 'number') {
+      return a - b
+    }
+
+    const aParsed = parseFloat(a as string)
+    const bParsed = parseFloat(b as string)
+
+    if (!isNaN(aParsed) && !isNaN(bParsed)) {
+      return aParsed - bParsed
+    }
+
+    // If one of them is a number, prioritize numbers
+    if (!isNaN(aParsed)) { return -1 }
+    if (!isNaN(bParsed)) { return 1 }
+
+    return 0
+  }
+
   // sorts by string-value of a given row's cell (depending on by which column the table is sorted) if no sortingFn is
   // provided. Otherwise uses that very sortingFn. If sortingOrder is `null` then restores the initial sorting order of
   // the rows.
   const sortedRows = computed(() => {
+    if (props.disableClientSideSorting) {
+      return filteredRows.value
+    }
+
     if (filteredRows.value.length <= 1) {
       return filteredRows.value
     }
@@ -92,15 +121,13 @@ export const useSortable = (
       if (sortingOrderSync.value === null) {
         return a.initialIndex - b.initialIndex
       } else {
-        const firstValue = a.cells[columnIndex].value
-        const secondValue = b.cells[columnIndex].value
         const firstSource = a.cells[columnIndex].source
         const secondSource = b.cells[columnIndex].source
 
         return sortingOrderRatio * (
           typeof column.sortingFn === 'function'
             ? column.sortingFn(firstSource, secondSource)
-            : firstValue.localeCompare(secondValue)
+            : defaultSortingFn(firstSource, secondSource)
         )
       }
     })
@@ -129,22 +156,26 @@ export const useSortable = (
   // Sets the clicked heading's column as a one to sort by and toggles the sorting order from "asc" to "desc" to `null`
   // (un-sorted) if the same column is clicked again or sets sorting order to "asc" if some other column is chosen.
   function toggleSorting (column: DataTableColumnInternal) {
+    let value: DataTableSortingOrder
     if (column.name === sortBySync.value) {
-      sortingOrderSync.value = getNextSortingOptionsValue(sortingOrderSync.value, column.sortingOptions)
+      value = getNextSortingOptionsValue(sortingOrderSync.value, column.sortingOptions)
     } else {
       sortBySync.value = column.name
-      sortingOrderSync.value = column.sortingOptions[0]
+      value = column.sortingOptions[0]
     }
+
+    sortingOrderSync.value = value
+    emit('columnSorted', { columnName: column.name, value, column })
   }
 
   const toggleSortingThrottled = useThrottleFunction(toggleSorting, props)
 
   const sortingOrderIconName = computed(() => {
     return sortingOrderSync.value === 'asc'
-      ? 'va-arrow-up'
+      ? 'va-sort-asc'
       : sortingOrderSync.value === 'desc'
-        ? 'va-arrow-down'
-        : 'unfold_more'
+        ? 'va-sort-desc'
+        : 'va-unsorted'
   }) as ComputedRef<TSortIcon>
 
   return {

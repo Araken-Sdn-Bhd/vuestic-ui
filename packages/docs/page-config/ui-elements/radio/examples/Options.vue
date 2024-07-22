@@ -1,5 +1,5 @@
 <template>
-  <va-radio
+  <VaRadio
     v-model="value"
     :options="['One', 'Two', 'Three']"
   />
@@ -9,7 +9,7 @@
 export default {
   data() {
     return {
-      value: 'one',
+      value: 'One',
     };
   },
 };

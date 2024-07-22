@@ -1,49 +1,27 @@
 <template>
-  <div class="max-w-xs">
-    <va-input
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+    <VaInput
       v-model="value"
-      class="mb-6"
-      placeholder="Default (solid)"
-    />
-    <va-input
-      v-model="value"
-      class="mb-6"
-      placeholder="Outline"
-      outline
-    />
-    <va-input
-      v-model="value"
-      class="mb-6"
-      placeholder="Bordered"
-      bordered
-    />
-    <va-input
-      v-model="value"
-      class="mb-6"
       placeholder="Default"
       label="Default"
     />
-    <va-input
+    <VaInput
       v-model="value"
-      class="mb-6"
-      placeholder="Outline"
-      label="Outline"
-      outline
+      placeholder="Solid"
+      label="Solid"
+      preset="solid"
     />
-    <va-input
+    <VaInput
       v-model="value"
-      class="mb-6"
       placeholder="Bordered"
       label="Bordered"
-      bordered
+      preset="bordered"
     />
-    <va-input
+    <VaInput
       v-model="value"
-      class="mb-4"
-      placeholder="Background"
-      label="Background"
-      color="#000"
-      background="warning"
+      placeholder="Inner label"
+      label="Inner label"
+      inner-label
     />
   </div>
 </template>

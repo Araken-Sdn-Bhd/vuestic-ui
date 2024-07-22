@@ -1,27 +1,59 @@
 <template>
-  <div class="h-52">
-    <va-sidebar>
-      <va-sidebar-item>
-        <va-sidebar-item-content>
-          <va-icon name="dashboard" />
-          <!-- User can hide item with css if he wants -->
-          <va-sidebar-item-title>Dashboard</va-sidebar-item-title>
-        </va-sidebar-item-content>
-      </va-sidebar-item>
+  <div style="height: 500px">
+    <VaSidebar>
+      <VaSidebarItem>
+        <VaSidebarItemContent>
+          <VaIcon name="dashboard" />
+          <VaSidebarItemTitle>Dashboard</VaSidebarItemTitle>
+        </VaSidebarItemContent>
+      </VaSidebarItem>
 
-      <va-sidebar-item active>
-        <va-sidebar-item-content>
-          <va-icon name="room" />
-          <va-sidebar-item-title>Sidebar demo</va-sidebar-item-title>
-        </va-sidebar-item-content>
-      </va-sidebar-item>
+      <VaAccordion>
+        <VaCollapse body-color="#00000022">
+          <template #header="{ value: isCollapsed }">
+            <VaSidebarItem>
+              <VaSidebarItemContent>
+                <VaIcon name="mail" />
+                <VaSidebarItemTitle>Messages</VaSidebarItemTitle>
+                <VaSpacer />
+                <VaIcon :name="isCollapsed ? 'va-arrow-up' : 'va-arrow-down'" />
+              </VaSidebarItemContent>
+            </VaSidebarItem>
+          </template>
 
-      <va-sidebar-item>
-        <va-sidebar-item-content>
-          <va-icon name="loop" />
-          <va-sidebar-item-title>Loop</va-sidebar-item-title>
-        </va-sidebar-item-content>
-      </va-sidebar-item>
-    </va-sidebar>
+          <template #body>
+            <VaSidebarItem>
+              <VaSidebarItemContent>
+                <VaIcon name="send" />
+                <VaSidebarItemTitle>Send</VaSidebarItemTitle>
+              </VaSidebarItemContent>
+            </VaSidebarItem>
+
+            <VaSidebarItem>
+              <VaSidebarItemContent>
+                <VaIcon name="drafts" />
+                <VaSidebarItemTitle>Drafts</VaSidebarItemTitle>
+              </VaSidebarItemContent>
+            </VaSidebarItem>
+          </template>
+        </VaCollapse>
+
+        <VaSidebarItem active>
+          <VaSidebarItemContent>
+            <VaIcon name="room" />
+            <VaSidebarItemTitle>Address book</VaSidebarItemTitle>
+          </VaSidebarItemContent>
+        </VaSidebarItem>
+      </VaAccordion>
+
+      <VaSpacer />
+
+      <VaSidebarItem>
+        <VaSidebarItemContent>
+          <VaIcon name="settings" />
+          <VaSidebarItemTitle>Settings</VaSidebarItemTitle>
+        </VaSidebarItemContent>
+      </VaSidebarItem>
+    </VaSidebar>
   </div>
 </template>

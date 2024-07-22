@@ -23,40 +23,39 @@
   </component>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from 'vue'
-import pick from 'lodash/pick'
+<script lang="ts" setup>
+import { computed } from 'vue'
 
 import {
   useBem,
   useComponentPresetProp,
   useRouterLink, useRouterLinkProps,
 } from '../../composables'
+import { pick } from '../../utils/pick'
 
-export default defineComponent({
+defineOptions({
   name: 'VaListItem',
-  emits: ['focus', 'click'],
-  props: {
-    ...useRouterLinkProps,
-    ...useComponentPresetProp,
-    tag: { type: String, default: 'div' },
-    disabled: { type: Boolean, default: false },
-  },
-
-  setup (props) {
-    const tabIndexComputed = computed(() => props.disabled ? -1 : 0)
-
-    const computedClass = useBem('va-list-item', () => ({
-      ...pick(props, ['disabled']),
-    }))
-
-    return {
-      ...useRouterLink(props),
-      tabIndexComputed,
-      computedClass,
-    }
-  },
 })
+
+const props = defineProps({
+  ...useRouterLinkProps,
+  ...useComponentPresetProp,
+  tag: { type: String, default: 'div' },
+  disabled: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['focus', 'click'])
+
+const tabIndexComputed = computed(() => props.disabled ? -1 : 0)
+
+const computedClass = useBem('va-list-item', () => ({
+  ...pick(props, ['disabled']),
+}))
+
+const {
+  tagComputed,
+  hrefComputed,
+} = useRouterLink(props)
 </script>
 
 <style lang="scss">

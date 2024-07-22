@@ -4,17 +4,22 @@ import apiDescription from './api-description';
 export default definePageConfig({
   blocks: [
     block.title("Counter"),
+    block.tags('counter', 'number input'),
     block.paragraph("The `va-counter` component is intended to be used as a simple counter."),
 
     block.subtitle("Examples"),
 
     block.example("Default", {
       title: "Basic usage",
-      description: "By default, `va-counter` has `v-model` prop, and may also include `stateful` state. With `manual-input` the user can manually enter a value."
+      description: ""
+    }),
+    block.example("ManualInput", {
+      title: "Manual input",
+      description: "With `manual-input` the user can manually enter a value."
     }),
     block.example("Style", {
       title: "Style",
-      description: "There are tree styles for component: default (solid), outline, bordered."
+      description: "There are tree styles for component: outlined (default), solid and bordered. You can change component looks with `presets` props"
     }),
     block.example("Buttons", {
       title: "Buttons",

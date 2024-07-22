@@ -39,6 +39,10 @@ export const navigationRoutes: NavigationRoute[] = [
         name: "accessibility-guide",
         displayName: "Accessibility Guide",
       },
+      {
+        name: "change-log",
+        displayName: "Changelog",
+      },
     ],
   },
   {
@@ -57,6 +61,9 @@ export const navigationRoutes: NavigationRoute[] = [
       {
         name: "tree-shaking",
         displayName: "Tree Shaking",
+        meta: {
+          badge: navigationBadge.updated('1.9.9'),
+        }
       },
       {
         name: "nuxt",
@@ -125,6 +132,27 @@ export const navigationRoutes: NavigationRoute[] = [
     ],
   },
   {
+    name: 'composables',
+    displayName: 'Composables',
+    disabled: true,
+    children: [
+      {
+        name: 'input-mask',
+        displayName: 'Input Mask',
+        meta: {
+          badge: navigationBadge.new('1.10.0'),
+        },
+      },
+      {
+        name: 'sticky-table-headers',
+        displayName: 'Sticky Table Headers',
+        meta: {
+          badge: navigationBadge.new('1.10.0'),
+        },
+      }
+    ]
+  },
+  {
     name: "ui-elements",
     displayName: "UI Elements",
     disabled: true,
@@ -188,6 +216,9 @@ export const navigationRoutes: NavigationRoute[] = [
       {
         name: "data-table",
         displayName: "Data Table",
+        meta: {
+          badge: navigationBadge.updated('1.8.3'),
+        }
       },
       {
         category: "Form",
@@ -195,6 +226,13 @@ export const navigationRoutes: NavigationRoute[] = [
         displayName: "Form",
         meta: {
           badge: navigationBadge.updated('1.6.5'),
+        }
+      },
+      {
+        name: "form-field",
+        displayName: "Form Field",
+        meta: {
+          badge: navigationBadge.new('1.9.8'),
         }
       },
       {
@@ -208,16 +246,22 @@ export const navigationRoutes: NavigationRoute[] = [
       {
         name: "checkbox",
         displayName: "Checkbox",
+        meta: {
+          badge: navigationBadge.updated('1.8.0'),
+        }
       },
       {
         name: "counter",
         displayName: "Counter",
+        meta: {
+          badge: navigationBadge.updated('1.8.0'),
+        }
       },
       {
         name: "radio",
         displayName: "Radio",
         meta: {
-          badge : navigationBadge.updated('1.7.0'),
+          badge : navigationBadge.updated('1.8.0'),
         }
       },
       {
@@ -227,12 +271,22 @@ export const navigationRoutes: NavigationRoute[] = [
       {
         name: "input",
         displayName: "Input",
+        meta: {
+          badge: navigationBadge.updated('1.8.0'),
+        }
+      },
+      {
+        name: "textarea",
+        displayName: "Textarea",
+        meta: {
+          badge : navigationBadge.new('1.8.0'),
+        }
       },
       {
         name: "select",
         displayName: "Select",
         meta: {
-          badge : navigationBadge.updated('1.7.0'),
+          badge : navigationBadge.updated('1.8.0'),
         }
       },
       {
@@ -254,6 +308,9 @@ export const navigationRoutes: NavigationRoute[] = [
       {
         name: "date-input",
         displayName: "Date Input",
+        meta: {
+          badge : navigationBadge.updated('1.8.0'),
+        }
       },
       {
         name: "time-picker",
@@ -262,14 +319,27 @@ export const navigationRoutes: NavigationRoute[] = [
       {
         name: "time-input",
         displayName: "Time Input",
+        meta: {
+          badge : navigationBadge.updated('1.8.0'),
+        }
       },
       {
         name: "color-input",
         displayName: "Color Input",
+        meta: {
+          badge: navigationBadge.updated('1.8.0'),
+        }
       },
 
       {
         category: 'Layout',
+        name: 'layout',
+        displayName: 'Layout',
+        meta: {
+          badge: navigationBadge.new('1.8.0'),
+        }
+      },
+      {
         name: 'aspect-ratio',
         displayName: 'Aspect Ratio',
         meta: {
@@ -346,7 +416,21 @@ export const navigationRoutes: NavigationRoute[] = [
         name: 'stepper',
         displayName: 'Stepper',
         meta: {
-          badge : navigationBadge.new('1.6.0'),
+          badge : navigationBadge.updated('1.8.3'),
+        }
+      },
+      {
+        name: 'menu',
+        displayName: 'Menu',
+        meta: {
+          badge : navigationBadge.new('1.8.4'),
+        }
+      },
+      {
+        name: 'menu-list',
+        displayName: 'Menu List',
+        meta: {
+          badge : navigationBadge.new('1.8.4'),
         }
       },
       {
@@ -362,6 +446,13 @@ export const navigationRoutes: NavigationRoute[] = [
         displayName: "Config",
         meta: {
           badge : navigationBadge.new('1.6.0 '),
+        }
+      },
+      {
+        name: 'sticky-scrollbar',
+        displayName: 'Sticky Scrollbar',
+        meta: {
+          badge : navigationBadge.new('1.9.10'),
         }
       },
       {
@@ -516,6 +607,39 @@ export const navigationRoutes: NavigationRoute[] = [
     ],
   },
   {
+    name: "compiler",
+    displayName: "Compiler",
+    meta: {
+      badge: navigationBadge.new('1.10.0'),
+    },
+    children: [
+      {
+        name: 'devtools',
+        displayName: 'Devtools',
+        meta: {
+          badge: navigationBadge.wip('1.10.0'),
+        },
+        path: '/compiler/devtools',
+      },
+      {
+        name: 'css-layers',
+        displayName: 'CSS Layers',
+        meta: {
+          badge: navigationBadge.new('1.10.0'),
+        },
+        path: '/compiler/css-layers',
+      },
+      {
+        name: 'vuestic-config',
+        displayName: 'Config',
+        meta: {
+          badge: navigationBadge.new('1.10.0'),
+        },
+        path: '/compiler/vuestic-config',
+      }
+    ]
+  },
+  {
     name: "extensions",
     displayName: "Integrations",
     disabled: true,
@@ -547,6 +671,13 @@ export const navigationRoutes: NavigationRoute[] = [
           badge: navigationBadge.new('1.6.0'),
         }
       },
+      {
+        name: 'unplugin-vue-components',
+        displayName: 'Auto import plugin',
+        meta: {
+          badge: navigationBadge.new('1.9.9'),
+        }
+      }
     ],
   },
 ];

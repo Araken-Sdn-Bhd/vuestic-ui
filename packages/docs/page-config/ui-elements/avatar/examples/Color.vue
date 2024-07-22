@@ -1,50 +1,31 @@
 <template>
-  <va-avatar
-    color="success"
-    class="mr-6"
-  >
-    J.D.
-  </va-avatar>
+  <div class="flex gap-6 flex-wrap">
+    <VaAvatar color="success">
+      J.D.
+    </VaAvatar>
 
-  <va-avatar
-    color="info"
-    class="mr-6"
-  >
-    J.D.
-  </va-avatar>
+    <VaAvatar color="info">
+      J.D.
+    </VaAvatar>
 
-  <va-avatar
-    color="warning"
-    class="mr-6"
-  >
-    J.D.
-  </va-avatar>
+    <VaAvatar color="warning">
+      J.D.
+    </VaAvatar>
 
-  <va-avatar
-    color="#fafaa0"
-    class="mr-6"
-  >
-    J.D.
-  </va-avatar>
+    <VaAvatar color="#fafaa0">
+      J.D.
+    </VaAvatar>
 
-  <va-avatar
-    color="danger"
-    class="mr-6"
-  >
-    J.D.
-  </va-avatar>
+    <VaAvatar color="danger">
+      J.D.
+    </VaAvatar>
 
-  <va-avatar
-    color="#692BEB"
-    class="mr-6"
-  >
-    J.D.
-  </va-avatar>
+    <VaAvatar color="#692BEB">
+      J.D.
+    </VaAvatar>
 
-  <va-avatar
-    color="#540C0C"
-    text-color="#fafaa0"
-  >
-    J.D.
-  </va-avatar>
+    <VaAvatar color="#540C0C" text-color="#fafaa0">
+      J.D.
+    </VaAvatar>
+  </div>
 </template>

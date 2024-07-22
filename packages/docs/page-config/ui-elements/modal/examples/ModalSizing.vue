@@ -1,46 +1,60 @@
 <template>
-  <va-button
+  <VaButton
+    class="mr-6 my-1"
+    @click="showModalSizeAuto = !showModalSizeAuto"
+  >
+    Show modal size small
+  </VaButton>
+
+  <VaButton
     class="mr-6 my-1"
     @click="showModalSizeSmall = !showModalSizeSmall"
   >
     Show modal size small
-  </va-button>
+  </VaButton>
 
-  <va-button
+  <VaButton
     class="mr-6 my-1"
     @click="showModalSizeMedium = !showModalSizeMedium"
   >
     Show modal size medium (default)
-  </va-button>
+  </VaButton>
 
-  <va-button
+  <VaButton
     class="my-1"
     @click="showModalSizeLarge = !showModalSizeLarge"
   >
     Show modal size large
-  </va-button>
+  </VaButton>
 
-  <va-modal
+  <VaModal
+    v-model="showModalSizeAuto"
+    message="Would you like to save?"
+    ok-text="Save"
+    size="auto"
+  />
+
+  <VaModal
     v-model="showModalSizeSmall"
     message="Would you like to save?"
     ok-text="Save"
     size="small"
   />
 
-  <va-modal
+  <VaModal
     v-model="showModalSizeMedium"
     ok-text="Apply"
   >
     <h3 class="va-h3">
       Medium
     </h3>
-    <p>
+    <p class="m-0">
       Classic modal overlay which represents a dialog box or other interactive
       component, such as a dismissible alert, sub-window, etc.
     </p>
-  </va-modal>
+  </VaModal>
 
-  <va-modal
+  <VaModal
     v-model="showModalSizeLarge"
     size="large"
   >
@@ -52,8 +66,7 @@
       Select users to go to a party.
     </p>
 
-    <va-data-table
-      style="width: 1000px"
+    <VaDataTable
       :items="[
         { name: 'Marcus Claus', email: 'marcus@epicmax.co', status: 'verified', balance: '$34.15' },
         { name: 'Moo Farah', email: 'moo@epicmax.co', status: 'pending', balance: '$199.0' },
@@ -62,7 +75,7 @@
       ]"
     >
       <template #cell(status)="{ rowData }">
-        <va-chip
+        <VaChip
           :color="({
             verified: 'primary',
             pending: 'secondary',
@@ -73,16 +86,17 @@
           square
         >
           {{ rowData.status }}
-        </va-chip>
+        </VaChip>
       </template>
-    </va-data-table>
-  </va-modal>
+    </VaDataTable>
+  </VaModal>
 </template>
 
 <script>
 export default {
   data() {
     return {
+      showModalSizeAuto: false,
       showModalSizeSmall: false,
       showModalSizeMedium: false,
       showModalSizeLarge: false,

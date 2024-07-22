@@ -5,7 +5,7 @@
   >
     <HeaderBanner closeable />
 
-    <va-navbar
+    <VaNavbar
       v-show="!isOptionsVisible"
       class="header"
       color="background-secondary"
@@ -26,15 +26,14 @@
             aria-hidden="true"
           />
         </NuxtLink>
-        <AlgoliaSearch class="header__searchbar" />
+        <LazyAlgoliaSearch class="header__searchbar" />
       </template>
 
       <template #right>
         <div
-          v-if="isOptionsListVisible"
-          class="header__options"
+          class="header__options hidden sm:flex"
         >
-          <va-button
+          <VaButton
             v-for="(link, index) in links"
             :key="index"
             preset="secondary"
@@ -44,47 +43,47 @@
             :target="link.target"
           >
             {{ link.text }}
-          </va-button>
+          </VaButton>
           <ColorDropdown class="mr-2" />
           <ThemeSwitch class="mr-4" />
           <VersionDropdown />
         </div>
 
         <!-- options mobile menu -->
-        <va-button
-          v-if="isOptionsMenuVisible"
+        <VaButton
+          class="sm:hidden"
           aria-label="Open options menu"
           preset="plain"
           @click="toggleOptions"
         >
-          <va-icon class="fas fa-bars" />
-        </va-button>
+          <VaIcon class="fas fa-bars" />
+        </VaButton>
       </template>
-    </va-navbar>
+    </VaNavbar>
 
     <!-- mobile options -->
     <nav
       v-show="isOptionsVisible"
-      class="header__mobile-options"
+      class="mobile-options header__mobile-options"
     >
       <div class="mobile-options__menu-button-wrapper">
-        <va-button
+        <VaButton
           v-if="isOptionsVisible"
           aria-label="Close options menu"
           preset="plain"
           @click="toggleOptions"
         >
-          <va-icon class="fas fa-times" />
-        </va-button>
+          <VaIcon class="fas fa-times" />
+        </VaButton>
       </div>
 
-      <va-list class="mobile-options__list">
-        <va-list-item
+      <VaList class="mobile-options__list">
+        <VaListItem
           v-for="(link, index) in links"
           :key="index"
         >
-          <va-list-item-section class="mobile-options__link">
-            <va-button
+          <VaListItemSection class="mobile-options__link">
+            <VaButton
               preset="plain"
               :to="link.to"
               :href="link.url"
@@ -92,33 +91,30 @@
               class="mobile-options__link-button"
             >
               {{ link.text }}
-            </va-button>
-          </va-list-item-section>
-        </va-list-item>
+            </VaButton>
+          </VaListItemSection>
+        </VaListItem>
 
         <div class="mobile-options__items">
           <ThemeSwitch class="mb-8" />
           <SocialsLinks size="large" />
-          <StarsButton repo="epicmaxco/vuestic-ui" />
+          <LazyLandingStarsButton repo="epicmaxco/vuestic-ui" />
           <VersionDropdown />
         </div>
-      </va-list>
+      </VaList>
     </nav>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { useBreakpoint } from 'vuestic-ui'
 
 import VersionDropdown from './header/VersionDropdown.vue'
 import ColorDropdown from './header/ColorDropdown.vue'
 import HeaderSelector from './header/HeaderSelector.vue'
 import VuesticLogo from './header/VuesticDocsLogo.vue'
-import AlgoliaSearch from '../AlgoliaSearch.vue'
 import ThemeSwitch from './header/ThemeSwitch.vue'
 import SocialsLinks from '../landing/SocialsLinks.vue'
-import StarsButton from '../landing/StarsButton.vue'
 
 const props = defineProps({
   isSidebarVisible: {
@@ -251,6 +247,11 @@ onMounted(() => {
 }
 
 .mobile-options {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: var(--va-background-primary);
+
   &__menu-button-wrapper {
     width: 100%;
     flex-shrink: 0;

@@ -7,7 +7,7 @@
     >
       <span class="name">{{ color.name }}:</span>
 
-      <va-color-palette
+      <VaColorPalette
         v-model="color.value"
         :palette="colorsPalette"
       />
@@ -46,7 +46,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style>
 .r {
   display: flex;
   align-items: center;

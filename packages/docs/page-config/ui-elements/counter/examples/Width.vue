@@ -1,16 +1,16 @@
 <template>
   <div class="flex gap-8 flex-wrap">
-    <va-counter
+    <VaCounter
       v-model="value"
       width="250px"
     />
 
-    <va-counter
+    <VaCounter
       v-model="value"
       outline
       buttons
       margins="20px"
-      width="200px"
+      style="width: 200px"
     />
   </div>
 </template>

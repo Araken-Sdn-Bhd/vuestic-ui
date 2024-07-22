@@ -1,7 +1,8 @@
 <template>
-  <va-slider
+  <VaSlider
     v-model="value"
     pins
+    :step="10"
   />
 </template>
 
@@ -9,7 +10,7 @@
 export default {
   data() {
     return {
-      value: 45,
+      value: 40,
     };
   },
 };

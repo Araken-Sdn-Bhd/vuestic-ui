@@ -10,11 +10,11 @@ export default definePageConfig({
 
     block.example("Default", {
       title: "Default usage",
-      description: "`VaForm` component in pair with `useForm` composable provides a simple way to validate multiple form fields. It gives you `isValid`, `errorMessages` computeds and `validate` method to validate all form fields at once. You can also reset validation with `resetValidation` method or reset whole form and it's values with `reset` method."
+      description: "`VaForm` component in pair with `useForm` composable provides a simple way to validate multiple form fields. It gives you `isValid`, `errorMessages` computed refs and `validate` method to validate all form fields at once. You can also reset validation with `resetValidation` method or reset whole form and its values with `reset` method."
     }),
     block.example("HideErrors", {
       title: "Named fields",
-      description: "If you don't like when form jumps you can name each form field and access it's error messages with `errorMessagesNamed` with `useForm` composable and hide errors under form fields using `hide-error-messages` props, so you can display them in a custom way."
+      description: "If you don't like when form jumps you can name each form field and access its error messages with `errorMessagesNamed` with `useForm` composable and hide errors under form fields using `hide-error-messages` props, so you can display them in a custom way."
     }),
     block.example("FormData", {
         title: "FormData",
@@ -27,8 +27,9 @@ export default definePageConfig({
     }),
     block.example("Submit", {
       title: "Form submit",
-      description: "You can fire the `submit` event of a `va-form` component: for this you need to set `tag=\"form\"` to the `va-form` and have at least one inner button with `type=\"submit\"`."
+      description: "You can fire the `submit` event of a `va-form` component: for this you need to set `tag=\"form\"` to the `va-form` and have at least one inner button with `type=\"submit\"`",
     }),
+    block.alert('info', 'If `action` attribute is not provided, the `submit` event will prevent default automatically. If you want submit method to be applied to current page (native form behavior) provide `action=""`.'),
 
     block.subtitle("API"),
     block.api("VaForm", apiDescription, apiOptions),

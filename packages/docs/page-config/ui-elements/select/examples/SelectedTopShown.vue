@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-xs">
-    <va-select
+    <VaSelect
       v-model="value"
       :options="options"
       selected-top-shown
@@ -12,7 +12,7 @@
 <script setup>
 import { ref } from "vue";
 
-const value = ref([]);
+const value = ref(["one", "two", "three"]);
 
 const options = [
   "one",

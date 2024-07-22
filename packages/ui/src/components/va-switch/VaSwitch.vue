@@ -15,10 +15,10 @@
       class="va-switch__container"
       tabindex="-1"
       @blur="onBlur"
+      @click="toggleSelection"
     >
       <div
         class="va-switch__inner"
-        @click="toggleSelection"
       >
         <input
           ref="input"
@@ -29,7 +29,7 @@
           v-on="keyboardFocusListeners"
           @focus="onFocus"
           @blur="onBlur"
-          @keypress.enter.prevent="toggleSelection"
+          @keypress.enter="onEnterKeyPress"
         >
         <div
           class="va-switch__track"
@@ -79,160 +79,168 @@
   </VaMessageListWrapper>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, computed, shallowRef } from 'vue'
-import pick from 'lodash/pick.js'
-
-import { generateUniqueId } from '../../utils/uuid'
+<script lang="ts" setup>
+import { PropType, computed, shallowRef, useSlots } from 'vue'
 
 import {
   useComponentPresetProp,
   useKeyboardOnlyFocus,
   useSelectable, useSelectableProps, useSelectableEmits,
   useColors, useTextColor,
-  useBem,
+  useBem, useTranslationProp,
 } from '../../composables'
 
 import { VaProgressCircle } from '../va-progress-circle'
-import { VaMessageListWrapper } from '../va-input'
+import { VaMessageListWrapper } from '../va-message-list'
+import { useComponentUuid } from '../../composables/useComponentUuid'
+import { pick } from '../../utils/pick'
 
-export default defineComponent({
+defineOptions({
   name: 'VaSwitch',
-  components: { VaProgressCircle, VaMessageListWrapper },
-  emits: [
-    ...useSelectableEmits,
-    'focus', 'blur', 'update:modelValue',
-  ],
-  props: {
-    ...useSelectableProps,
-    ...useComponentPresetProp,
-    id: { type: String, default: '' },
-    name: { type: String, default: '' },
-    modelValue: {
-      type: [Number, Boolean, Array, String, Object] as PropType<boolean | unknown[] | string | number | Record<string, unknown> | null>,
-      default: false,
-    },
-    trueLabel: { type: String, default: null },
-    falseLabel: { type: String, default: null },
-    trueInnerLabel: { type: String, default: null },
-    falseInnerLabel: { type: String, default: null },
-    ariaLabel: { type: String, default: '$t:switch' },
-    color: { type: String, default: 'primary' },
-    offColor: { type: String, default: 'background-element' },
-    size: {
-      type: String as PropType<'medium' | 'small' | 'large'>,
-      default: 'medium',
-      validator: (value: string) => ['medium', 'small', 'large'].includes(value),
-    },
+})
+
+const props = defineProps({
+  ...useSelectableProps,
+  ...useComponentPresetProp,
+  id: { type: String, default: '' },
+  name: { type: String, default: '' },
+  modelValue: {
+    type: [Number, Boolean, Array, String, Object] as PropType<boolean | unknown[] | string | number | Record<string, unknown> | null>,
+    default: false,
   },
-  setup (props, { emit, slots }) {
-    const elements = {
-      container: shallowRef<HTMLElement>(),
-      input: shallowRef<HTMLElement>(),
-      label: shallowRef<HTMLElement>(),
-    }
-
-    const { getColor } = useColors()
-    const { hasKeyboardFocus, keyboardFocusListeners } = useKeyboardOnlyFocus()
-    const {
-      isChecked,
-      computedError,
-      isIndeterminate,
-      computedErrorMessages,
-      validationAriaAttributes,
-      ...selectable
-    } = useSelectable(props, emit, elements)
-
-    const computedBackground = computed(() => getColor(isChecked.value ? props.color : props.offColor))
-    const { textColorComputed } = useTextColor(computedBackground)
-
-    const computedInnerLabel = computed(() => {
-      if (props.trueInnerLabel && isChecked.value) {
-        return props.trueInnerLabel
-      }
-      if (props.falseInnerLabel && !isChecked.value) {
-        return props.falseInnerLabel
-      }
-      return ''
-    })
-
-    const computedLabel = computed(() => {
-      if (props.trueLabel && isChecked.value) {
-        return props.trueLabel
-      }
-      if (props.falseLabel && !isChecked.value) {
-        return props.falseLabel
-      }
-      return props.label
-    })
-
-    const computedClass = useBem('va-switch', () => ({
-      ...pick(props, ['readonly', 'disabled', 'leftLabel']),
-      checked: isChecked.value,
-      indeterminate: isIndeterminate.value,
-      small: props.size === 'small',
-      large: props.size === 'large',
-      error: computedError.value,
-      keyboardFocus: hasKeyboardFocus.value,
-    }))
-
-    const styleComputed = computed(() => ({
-      lineHeight: computedErrorMessages.value.length ? 1 : 0,
-    }))
-
-    const progressCircleSize = computed(() => {
-      const size = { small: '15px', medium: '20px', large: '25px' }
-
-      return size[props.size]
-    })
-
-    const trackStyle = computed(() => ({
-      borderColor: computedError.value ? getColor('danger') : '',
-      backgroundColor: computedBackground.value,
-    }))
-
-    const labelStyle = computed(() => ({
-      color: computedError.value ? getColor('danger') : '',
-    }))
-
-    const trackLabelStyle = computed(() => ({
-      color: textColorComputed.value,
-      'text-align': isChecked.value ? 'left' as const : 'right' as const,
-    }))
-
-    const ariaLabelIdComputed = computed(() => `aria-label-id-${generateUniqueId()}`)
-    const inputAttributesComputed = computed(() => ({
-      id: props.id || undefined,
-      name: props.name || undefined,
-      disabled: props.disabled,
-      readonly: props.readonly,
-      'aria-disabled': props.disabled,
-      'aria-readonly': props.readonly,
-      'aria-checked': !!props.modelValue,
-      'aria-label': !slots.default ? props.ariaLabel : undefined,
-      'aria-labelledby': computedLabel.value || slots.default ? ariaLabelIdComputed.value : undefined,
-      ...validationAriaAttributes.value,
-    }))
-
-    return {
-      ...selectable,
-      computedErrorMessages,
-      isChecked,
-      computedError,
-      isIndeterminate,
-      keyboardFocusListeners,
-      computedInnerLabel,
-      computedLabel,
-      computedClass,
-      styleComputed,
-      progressCircleSize,
-      trackStyle,
-      labelStyle,
-      trackLabelStyle,
-      ariaLabelIdComputed,
-      inputAttributesComputed,
-    }
+  trueLabel: { type: String, default: null },
+  falseLabel: { type: String, default: null },
+  trueInnerLabel: { type: String, default: null },
+  falseInnerLabel: { type: String, default: null },
+  ariaLabel: useTranslationProp('$t:switch'),
+  color: { type: String, default: 'primary' },
+  offColor: { type: String, default: 'background-element' },
+  size: {
+    type: String as PropType<'medium' | 'small' | 'large'>,
+    default: 'medium',
+    validator: (value: string) => ['medium', 'small', 'large'].includes(value),
   },
+})
+
+const emit = defineEmits([
+  ...useSelectableEmits,
+  'focus', 'blur', 'update:modelValue',
+])
+
+const elements = {
+  container: shallowRef<HTMLElement>(),
+  input: shallowRef<HTMLElement>(),
+  label: shallowRef<HTMLElement>(),
+}
+
+const { getColor } = useColors()
+const { hasKeyboardFocus, keyboardFocusListeners } = useKeyboardOnlyFocus()
+const {
+  isChecked,
+  computedError,
+  isIndeterminate,
+  computedErrorMessages,
+  validationAriaAttributes,
+  toggleSelection,
+  onBlur,
+  onFocus,
+  reset,
+  focus,
+  isDirty,
+  isTouched,
+  isLoading,
+  isError,
+} = useSelectable(props, emit, elements)
+
+const computedBackground = computed(() => getColor(isChecked.value ? props.color : props.offColor))
+const { textColorComputed } = useTextColor(computedBackground)
+
+const computedInnerLabel = computed(() => {
+  if (props.trueInnerLabel && isChecked.value) {
+    return props.trueInnerLabel
+  }
+  if (props.falseInnerLabel && !isChecked.value) {
+    return props.falseInnerLabel
+  }
+  return ''
+})
+
+const computedLabel = computed(() => {
+  if (props.trueLabel && isChecked.value) {
+    return props.trueLabel
+  }
+  if (props.falseLabel && !isChecked.value) {
+    return props.falseLabel
+  }
+  return props.label
+})
+
+const computedClass = useBem('va-switch', () => ({
+  ...pick(props, ['readonly', 'disabled', 'leftLabel']),
+  checked: isChecked.value,
+  indeterminate: isIndeterminate.value,
+  small: props.size === 'small',
+  large: props.size === 'large',
+  error: computedError.value,
+  keyboardFocus: hasKeyboardFocus.value,
+}))
+
+const styleComputed = computed(() => ({
+  lineHeight: computedErrorMessages.value.length ? 1 : 0,
+}))
+
+const progressCircleSize = computed(() => {
+  const size = { small: '15px', medium: '20px', large: '25px' }
+
+  return size[props.size]
+})
+
+const trackStyle = computed(() => ({
+  borderColor: computedError.value ? getColor('danger') : '',
+  backgroundColor: computedBackground.value,
+}))
+
+const labelStyle = computed(() => ({
+  color: computedError.value ? getColor('danger') : '',
+}))
+
+const trackLabelStyle = computed(() => ({
+  color: textColorComputed.value,
+  'text-align': isChecked.value ? 'left' as const : 'right' as const,
+}))
+
+const slots = useSlots()
+
+const componentId = useComponentUuid()
+const ariaLabelIdComputed = computed(() => `aria-label-id-${componentId}`)
+const inputAttributesComputed = computed(() => ({
+  id: props.id || undefined,
+  name: props.name || undefined,
+  disabled: props.disabled,
+  readonly: props.readonly,
+  'aria-disabled': props.disabled,
+  'aria-readonly': props.readonly,
+  'aria-checked': !!props.modelValue,
+  'aria-label': !slots.default ? props.ariaLabel : undefined,
+  'aria-labelledby': computedLabel.value || slots.default ? ariaLabelIdComputed.value : undefined,
+  tabindex: props.disabled ? -1 : 0,
+  checked: isChecked.value,
+  ...validationAriaAttributes.value,
+}))
+
+const onEnterKeyPress = () => {
+  elements.input.value?.click()
+}
+
+const input = elements.input
+
+defineExpose({
+  focus,
+  reset,
+  isDirty,
+  isTouched,
+  isLoading,
+  isError,
 })
 </script>
 
@@ -318,6 +326,7 @@ export default defineComponent({
   &--left-label {
     .va-switch__container {
       flex-direction: row-reverse;
+      justify-content: start;
     }
 
     .va-switch__label {
@@ -464,7 +473,14 @@ export default defineComponent({
   }
 
   &__input {
-    @include visually-hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
   }
 }
 </style>

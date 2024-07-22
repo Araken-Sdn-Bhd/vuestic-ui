@@ -2,7 +2,7 @@
   <div
     class="va-avatar-group"
     :class="classComputed"
-    role="group"
+    role="list"
   >
     <va-avatar
       v-for="(option, idx) in maxOptions"
@@ -10,7 +10,7 @@
       v-bind="{ ...avatarProps, ...option }"
       role="listitem"
     />
-    <slot name="rest" v-bind="avatarProps">
+    <slot v-if="restOptionsCount > 0" name="rest" v-bind="avatarProps">
       <va-avatar
         v-bind="avatarProps"
         :color="restColor"
@@ -24,73 +24,67 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, PropType } from 'vue'
+import { computed, PropType } from 'vue'
 
 import { VaAvatar } from '../va-avatar'
-
-import pick from 'lodash/pick.js'
 import { extractComponentProps, filterComponentProps } from '../../utils/component-options'
-import { useBem, useComponentPresetProp, useSize, useSizeProps } from '../../composables'
+import { useBem, useComponentPresetProp, useSize, useSizeProps, useNumericProp } from '../../composables'
+import { pick } from '../../utils/pick'
 
 const VaAvatarProps = extractComponentProps(VaAvatar)
+</script>
 
-export default defineComponent({
+<script lang="ts" setup>
+
+defineOptions({
   name: 'VaAvatarGroup',
+})
 
-  components: {
-    VaAvatar,
+const props = defineProps({
+  ...useSizeProps,
+  ...useComponentPresetProp,
+  ...VaAvatarProps,
+
+  max: {
+    type: [Number, String],
+    default: 0,
   },
-
-  props: {
-    ...useSizeProps,
-    ...useComponentPresetProp,
-    ...VaAvatarProps,
-
-    max: {
-      type: Number,
-      default: undefined,
-    },
-    vertical: {
-      type: Boolean,
-      default: false,
-    },
-    options: {
-      type: Array as PropType<Record<string, unknown>[]>,
-      default: () => [],
-    },
+  vertical: {
+    type: Boolean,
+    default: false,
+  },
+  options: {
+    type: Array as PropType<Record<string, unknown>[]>,
+    default: () => [],
+  },
     /** If there are more avatars that can be displayed we show rest number. This prop changes color of rest indicator. */
-    restColor: {
-      type: String,
-      default: 'secondary',
-    },
-  },
-
-  setup (props) {
-    const classComputed = useBem('va-avatar-group', () => ({
-      ...pick(props, ['vertical']),
-    }))
-
-    const maxOptions = computed(() => props.options.slice(0, props.max))
-    const visibleItemsCount = computed(() => props.max ? props.max + 1 : 1)
-    const restOptionsCount = computed(() => props.options.length - (props.max || 0))
-    const { sizeComputed, fontSizeComputed } = useSize(props, 'VaAvatarGroup')
-
-    const filteredAvatarProps = filterComponentProps(VaAvatarProps)
-    const avatarProps = computed(() => ({
-      ...filteredAvatarProps.value,
-      fontSize: fontSizeComputed.value,
-      size: sizeComputed.value,
-    }))
-
-    return {
-      classComputed,
-      maxOptions,
-      visibleItemsCount,
-      restOptionsCount,
-      avatarProps,
-    }
+  restColor: {
+    type: String,
+    default: 'secondary',
   },
 })
+
+const maxComputed = useNumericProp('max')
+const classComputed = useBem('va-avatar-group', () => ({
+  ...pick(props, ['vertical']),
+}))
+
+const maxOptions = computed(() => maxComputed.value && maxComputed.value <= props.options.length ? props.options.slice(0, maxComputed.value) : props.options)
+const restOptionsCount = computed(() => {
+  const hasOptions = props.options.length > 0
+  const canAddMoreOptions = maxOptions.value.length < props.options.length
+  const remainingOptions = props.options.length - (maxComputed.value || 0)
+
+  return hasOptions && canAddMoreOptions ? remainingOptions : 0
+})
+const { sizeComputed, fontSizeComputed } = useSize(props, 'VaAvatarGroup')
+
+const filteredAvatarProps = filterComponentProps(VaAvatarProps)
+const avatarProps = computed(() => ({
+  ...filteredAvatarProps.value,
+  fontSize: fontSizeComputed.value,
+  size: sizeComputed.value,
+}))
 </script>
 
 <style lang="scss">

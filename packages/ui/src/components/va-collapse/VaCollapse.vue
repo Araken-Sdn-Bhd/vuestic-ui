@@ -2,7 +2,6 @@
   <div class="va-collapse" :class="computedClasses">
     <div
       class="va-collapse__header-wrapper"
-      role="heading"
       @click="toggle"
       @keydown.enter="toggle"
       @keydown.space="toggle"
@@ -13,6 +12,14 @@
           value: computedModelValue,
           bind: headerAttributes,
           attributes: headerAttributes,
+          attrs: headerAttributes,
+          iconAttrs: {
+            class: [
+              'va-collapse__expand-icon',
+              computedModelValue ? 'a-collapse__expand-icon--expanded' : 'a-collapse__expand-icon--collapsed'
+            ]
+          },
+          text: header,
         }"
       >
         <div
@@ -24,155 +31,232 @@
             v-if="icon"
             class="va-collapse__header__icon"
             :name="icon"
-            :color="textColorComputed"
           />
           <slot
             name="header-content"
             v-bind="{ header }"
           >
             <div class="va-collapse__header__text">
-                {{ header }}
+              {{ header }}
             </div>
           </slot>
-          <va-icon
-            class="va-collapse__header__icon"
-            :name="computedModelValue ? 'va-arrow-up' : 'va-arrow-down'"
-            :color="textColorComputed"
-          />
+          <slot name="expand-icon">
+            <va-icon
+              class="va-collapse__expand-icon"
+              name="va-arrow-down"
+              :class="computedModelValue ? 'va-collapse__expand-icon--expanded' : 'va-collapse__expand-icon--collapsed'"
+            />
+          </slot>
         </div>
       </slot>
     </div>
-    <div class="va-collapse__body-wrapper" :style="contentStyle">
+    <div
+      class="va-collapse__body-wrapper"
+      :class="{
+        'va-collapse__body-wrapper--bordered': !$slots.body && !$slots.header,
+      }"
+      :style="contentStyle"
+      @transitionend="onTransitionEnd"
+    >
       <div
+        v-if="doRenderBody"
         class="va-collapse__body"
         ref="body"
         role="region"
         :id="panelIdComputed"
         :aria-labelledby="headerIdComputed"
       >
-        <slot />
+        <slot name="body">
+          <div class="va-collapse__content">
+            <slot name="default">
+              <slot name="content" />
+            </slot>
+          </div>
+        </slot>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, ref, shallowRef } from 'vue'
-import pick from 'lodash/pick.js'
-
+<script lang="ts" setup>
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import {
   useColors, useTextColor,
-  useSyncProp,
   useBem,
   useResizeObserver,
   useComponentPresetProp,
+  useStateful,
+  useStatefulProps,
+  useSelectableEmits,
 } from '../../composables'
 import { useAccordionItem } from '../va-accordion/hooks/useAccordion'
 
-import { generateUniqueId } from '../../utils/uuid'
+import { useComponentUuid } from '../../composables/useComponentUuid'
 
 import { VaIcon } from '../va-icon'
+import { pick } from '../../utils/pick'
+import { isNilValue } from '../../utils/isNilValue'
 
-export default defineComponent({
+defineOptions({
   name: 'VaCollapse',
-  components: {
-    VaIcon,
-  },
-  props: {
-    ...useComponentPresetProp,
-    modelValue: { type: Boolean, default: undefined },
-    disabled: { type: Boolean, default: false },
-    header: { type: String, default: '' },
-    icon: { type: String, default: '' },
-    solid: { type: Boolean, default: false },
-    color: { type: String, default: 'background-element' },
-    textColor: { type: String, default: '' },
-    colorAll: { type: Boolean, default: false },
-    flat: { type: Boolean, default: false },
-  },
-  emits: ['update:modelValue'],
+})
 
-  setup (props, { emit, slots }) {
-    const body = shallowRef<HTMLElement>()
+const props = defineProps({
+  ...useComponentPresetProp,
+  ...useStatefulProps,
+  modelValue: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
+  header: { type: String, default: '' },
+  icon: { type: String, default: '' },
+  color: { type: String, default: undefined },
+  bodyColor: { type: String, default: undefined },
+  textColor: { type: String, default: '' },
+  bodyTextColor: { type: String, default: '' },
+  iconColor: { type: String, default: 'secondary' },
+  colorAll: { type: Boolean, default: false },
+  stateful: { type: Boolean, default: true },
+})
 
-    const [computedModelValue] = useSyncProp('modelValue', props, emit, false)
+const emit = defineEmits(['update:modelValue', ...useSelectableEmits])
 
-    const { getColor, getHoverColor } = useColors()
-    const { accordionProps, toggle } = useAccordionItem(computedModelValue)
+const body = shallowRef<HTMLElement>()
 
-    const { textColorComputed } = useTextColor()
+const { valueComputed } = useStateful(props, emit, 'modelValue')
 
-    const bodyHeight = ref()
-    useResizeObserver([body], () => {
-      bodyHeight.value = body.value?.clientHeight ?? 0
-    })
+const { getColor, getTextColor, setHSLAColor } = useColors()
+const { accordionProps, accordionItemValue } = useAccordionItem()
 
-    const height = computed(() => computedModelValue.value ? bodyHeight.value : 0)
-
-    const getTransition = () => {
-      const duration = height.value / 1000 * 0.2
-      return `${duration > 0.2 ? duration : 0.2}s`
+const computedModelValue = computed({
+  get () {
+    // If user provided value directly on VaCollapse, we use it instead of accordion value
+    if (valueComputed.userProvided) {
+      return valueComputed.value
     }
 
-    const getBackground = () => {
-      return props.color && props.colorAll
-        ? getHoverColor(getColor(props.color))
-        : ''
+    if (!isNilValue(accordionItemValue)) {
+      return accordionItemValue.value
     }
 
-    const uniqueId = computed(generateUniqueId)
-    const headerIdComputed = computed(() => `header-${uniqueId.value}`)
-    const panelIdComputed = computed(() => `panel-${uniqueId.value}`)
-    const tabIndexComputed = computed(() => props.disabled ? -1 : 0)
-
-    const headerAttributes = computed(() => ({
-      id: headerIdComputed.value,
-      tabindex: tabIndexComputed.value,
-      'aria-controls': panelIdComputed.value,
-      'aria-expanded': computedModelValue.value,
-      'aria-disabled': props.disabled,
-      role: 'button',
-    }))
-
-    const computedClasses = useBem('va-collapse', () => ({
-      ...pick(props, ['disabled', 'solid', 'flat']),
-      expanded: computedModelValue.value,
-      active: props.solid && computedModelValue.value,
-      popout: !!(accordionProps.value.popout && computedModelValue.value),
-      inset: !!(accordionProps.value.inset && computedModelValue.value),
-    }))
-
-    return {
-      body,
-      height,
-
-      toggle,
-      computedModelValue,
-
-      headerIdComputed,
-      headerAttributes,
-      panelIdComputed,
-      tabIndexComputed,
-
-      textColorComputed,
-      computedClasses,
-
-      headerStyle: computed(() => ({
-        paddingLeft: props.icon && 0,
-        color: textColorComputed.value,
-        backgroundColor: props.color ? getColor(props.color) : '',
-      })),
-
-      contentStyle: computed(() => {
-        return {
-          visibility: computedModelValue.value ? 'visible' as const : 'hidden' as const,
-          height: `${height.value}px`,
-          transitionDuration: getTransition(),
-          background: computedModelValue.value ? getBackground() : '',
-        }
-      }),
-    }
+    return valueComputed.value
   },
+  set (v) {
+    if (!isNilValue(accordionItemValue)) {
+      accordionItemValue.value = v
+    }
+    valueComputed.value = v
+  },
+})
+
+if (valueComputed.userProvided && !isNilValue(accordionItemValue)) {
+  accordionItemValue.value = valueComputed.value
+}
+
+const bodyHeight = ref()
+useResizeObserver([body], ([body]) => {
+  bodyHeight.value = body.contentRect.height ?? 0
+})
+
+const height = computed(() => computedModelValue.value ? bodyHeight.value : 0)
+
+const getTransition = () => {
+  const duration = height.value / 1000 * 0.2
+  return `${duration > 0.2 ? duration : 0.2}s`
+}
+
+const contentBackground = computed(() => {
+  if (props.bodyColor) {
+    return getColor(props.bodyColor)
+  }
+
+  return props.color && props.colorAll
+    ? setHSLAColor(getColor(props.color), { a: 0.07 })
+    : undefined
+})
+
+const headerBackground = computed(() => {
+  return props.color ? getColor(props.color) : undefined
+})
+
+const uniqueId = useComponentUuid()
+const headerIdComputed = computed(() => `header-${uniqueId}`)
+const panelIdComputed = computed(() => `panel-${uniqueId}`)
+const tabIndexComputed = computed(() => props.disabled ? -1 : 0)
+
+const headerAttributes = computed(() => ({
+  id: headerIdComputed.value,
+  tabindex: tabIndexComputed.value,
+  'aria-controls': panelIdComputed.value,
+  'aria-expanded': computedModelValue.value,
+  'aria-disabled': props.disabled,
+  role: 'button',
+}))
+
+const isHeightChanging = ref(false)
+
+watch(height, (newValue, oldValue) => {
+  // If no transition happened, just got initial height value
+  if (oldValue === undefined) { return }
+  if (isHeightChanging.value === true) { return }
+  isHeightChanging.value = true
+})
+
+const onTransitionEnd = (e: TransitionEvent) => {
+  if (e.propertyName === 'height' && e.target === e.currentTarget) {
+    isHeightChanging.value = false
+  }
+}
+
+const computedClasses = useBem('va-collapse', () => ({
+  ...pick(props, ['disabled']),
+  expanded: computedModelValue.value,
+  active: computedModelValue.value,
+  popout: !!(accordionProps.value.popout && computedModelValue.value),
+  inset: !!(accordionProps.value.inset && computedModelValue.value),
+  'height-changing': isHeightChanging.value,
+  'colored-body': Boolean(contentBackground.value),
+  'colored-header': Boolean(headerBackground.value),
+}))
+
+const toggle = () => {
+  if (props.disabled) { return }
+  computedModelValue.value = !computedModelValue.value
+}
+
+const { textColorComputed } = useTextColor(headerBackground)
+
+const headerStyle = computed(() => ({
+  color: textColorComputed.value,
+  backgroundColor: headerBackground.value,
+}))
+
+// Prevent body from rendering, to prevent tabbing into it
+const doRenderBody = computed(() => {
+  if (computedModelValue.value) {
+    return true
+  }
+
+  if (isHeightChanging.value) {
+    return true
+  }
+
+  return false
+})
+
+const contentStyle = computed(() => {
+  return {
+    height: `${height.value}px`,
+    transitionDuration: getTransition(),
+    background: computedModelValue.value ? contentBackground.value : '',
+    color: props.bodyTextColor
+      ? getColor(props.bodyTextColor)
+      : contentBackground.value
+        ? getColor(getTextColor(contentBackground.value))
+        : 'currentColor',
+  }
+})
+
+defineExpose({
+  toggle,
 })
 </script>
 
@@ -183,67 +267,75 @@ export default defineComponent({
 .va-collapse {
   transition: var(--va-collapse-transition, var(--va-swing-transition));
   font-family: var(--va-font-family);
+  display: flex;
+  flex-direction: column;
 
   &__body-wrapper {
     transition: var(--va-collapse-body-wrapper-transition);
-    overflow: hidden;
+    overflow: auto;
+
+    &--bordered {
+      border-bottom: 1px solid var(--va-background-border);
+      box-sizing: content-box;
+
+      .va-collapse--colored-header:not(.va-collapse--expanded) & {
+        border-bottom: none;
+      }
+
+      .va-collapse--colored-body.va-collapse--expanded & {
+        border-bottom: none;
+      }
+    }
   }
 
   &__body {
     top: 0;
     left: 0;
     width: var(--va-collapse-body-width);
+    transition: var(--va-collapse-body-transition);
+    opacity: 0;
+  }
+
+  &__content {
+    padding: var(--va-collapse-padding);
+    padding-top: calc(var(--va-collapse-padding) / 1.5);
+    box-sizing: border-box;
+
+    &:empty {
+      padding: 0;
+    }
   }
 
   &__header {
-    display: var(--va-collapse-header-content-display);
-    justify-content: var(--va-collapse-header-content-justify-content);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--va-collapse-gap);
     cursor: var(--va-collapse-header-content-cursor);
-    background-color: var(--va-collapse-header-content-background-color);
-    box-shadow: var(--va-collapse-header-content-box-shadow, var(--va-block-box-shadow));
-    border-radius: var(--va-collapse-header-content-border-radius, var(--va-block-border-radius));
-    align-items: var(--va-collapse-header-content-align-items);
-    padding-top: var(--va-collapse-header-content-padding-top);
-    padding-bottom: var(--va-collapse-header-content-padding-bottom);
-    padding-left: var(--va-collapse-header-content-padding-left);
+    padding: var(--va-collapse-padding);
+    transition: all 0.2s ease-in-out;
 
     &__text {
-      width: var(--va-collapse-header-content-text-width);
+      width: 100%;
       font-weight: var(--va-collapse-header-content-text-font-weight);
-    }
-
-    &__icon {
-      @include flex-center();
-
-      min-width: var(--va-collapse-header-content-icon-min-width);
-      margin-left: var(--va-collapse-header-content-icon-margin-left);
-      margin-right: var(--va-collapse-header-content-icon-margin-right);
-      color: var(--va-collapse-header-content-icon-color);
     }
 
     @include keyboard-focus-outline(var(--va-collapse-header-content-border-radius));
   }
 
-  &--solid {
-    box-shadow: var(--va-collapse-solid-box-shadow);
-    border-radius: var(--va-collapse-solid-border-radius);
-
+  &--expanded {
     .va-collapse {
-      &__header {
-        border-radius: var(--va-collapse-solid-header-content-border-radius, var(--va-block-border-radius));
-        transition: var(--va-collapse-solid-header-content-transition);
-        box-shadow: var(--va-collapse-solid-header-content-box-shadow, var(--va-block-box-shadow));
-        background-color: var(--va-collapse-solid-header-content-background-color);
-      }
-
-      &__body-wrapper {
-        border-radius: var(--va-collapse-solid-border-radius);
-      }
-
       &__body {
-        border-radius: var(--va-collapse-solid-body-border-radius);
-        margin-top: var(--va-collapse-solid-body-margin-top);
+        opacity: 1;
       }
+    }
+  }
+
+  &__expand-icon {
+    transition: var(--va-collapse-expand-icon-transition);
+
+    &--expanded {
+      transform: rotate(180deg);
     }
   }
 
@@ -255,15 +347,16 @@ export default defineComponent({
     margin: var(--va-collapse-inset-margin);
   }
 
-  &--flat {
-    .va-collapse__header {
-      --va-collapse-solid-header-content-border-radius: 0;
-      --va-collapse-header-content-box-shadow: none;
-    }
-  }
-
   &--disabled {
     @include va-disabled();
+  }
+
+  &--height-changing {
+    .va-collapse {
+      &__body-wrapper {
+        overflow: hidden;
+      }
+    }
   }
 }
 </style>

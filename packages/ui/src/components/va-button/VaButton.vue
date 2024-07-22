@@ -34,12 +34,12 @@
     </span>
     <template v-if="loading">
       <slot name="loading" v-bind="{
-        size: loaderSizeComputed,
+        size: iconSizeComputed,
         color: textColorComputed,
       }">
         <va-progress-circle
           class="va-button__loader"
-          :size="loaderSizeComputed"
+          :size="iconSizeComputed"
           :color="textColorComputed"
           :thickness="0.15"
           indeterminate
@@ -49,10 +49,8 @@
   </component>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, computed, toRefs, shallowRef } from 'vue'
-import pick from 'lodash/pick.js'
-
+<script lang="ts" setup>
+import { PropType, computed, toRefs, shallowRef } from 'vue'
 import {
   useBem,
   useFocus,
@@ -64,6 +62,7 @@ import {
   useRouterLink, useRouterLinkProps,
   useComponentPresetProp,
   useSlotPassed,
+  useNumericProp,
 } from '../../composables'
 
 import { useButtonBackground } from './hooks/useButtonBackground'
@@ -72,132 +71,122 @@ import { useButtonTextColor } from './hooks/useButtonTextColor'
 
 import { VaIcon } from '../va-icon'
 import { VaProgressCircle } from '../va-progress-circle'
+import { pick } from '../../utils/pick'
 
-export default defineComponent({
+import type { ColorName } from '../../composables'
+
+defineOptions({
   name: 'VaButton',
-  components: { VaIcon, VaProgressCircle },
-  props: {
-    ...useComponentPresetProp,
-    ...useSizeProps,
-    ...useHoverStyleProps,
-    ...usePressedStyleProps,
-    ...useLoadingProps,
-    ...useRouterLinkProps,
-    tag: { type: String, default: 'button' },
-    type: { type: String, default: 'button' },
-    block: { type: Boolean, default: false },
-    disabled: { type: Boolean, default: false },
+})
 
-    color: { type: String, default: 'primary' },
-    textColor: { type: String, default: '' },
-    textOpacity: { type: Number, default: 1 },
-    backgroundOpacity: { type: Number, default: 1 },
-    borderColor: { type: String, default: '' },
+const props = defineProps({
+  ...useComponentPresetProp,
+  ...useSizeProps,
+  ...useHoverStyleProps,
+  ...usePressedStyleProps,
+  ...useLoadingProps,
+  ...useRouterLinkProps,
+  tag: { type: String, default: 'button' },
+  type: { type: String, default: 'button' },
+  block: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
+
+  color: { type: String as PropType<ColorName>, default: 'primary' },
+  textColor: { type: String, default: '' },
+  textOpacity: { type: [Number, String], default: 1 },
+  backgroundOpacity: { type: [Number, String], default: 1 },
+  borderColor: { type: String, default: '' },
 
     // only for filled bg state
-    gradient: { type: Boolean, default: false },
-    plain: { type: Boolean, default: false },
-    round: { type: Boolean, default: false },
-    size: {
-      type: String as PropType<'small' | 'medium' | 'large'>,
-      default: 'medium',
-      validator: (v: string) => ['small', 'medium', 'large'].includes(v),
-    },
-
-    icon: { type: String, default: '' },
-    iconRight: { type: String, default: '' },
-    iconColor: { type: String, default: '' },
+  gradient: { type: Boolean, default: false },
+  plain: { type: Boolean, default: false },
+  round: { type: Boolean, default: false },
+  size: {
+    type: String as PropType<'small' | 'medium' | 'large'>,
+    default: 'medium',
+    validator: (v: string) => ['small', 'medium', 'large'].includes(v),
   },
-  setup (props) {
-    // colors
-    const { getColor } = useColors()
-    const colorComputed = computed(() => getColor(props.color))
 
-    // loader size
-    const { sizeComputed } = useSize(props)
-    const loaderSizeComputed = computed(() => {
-      const size = /([0-9]*)(px)/.exec(sizeComputed.value) as null | [string, string, string]
-      return size ? `${+size[1] / 2}${size[2]}` : sizeComputed.value
-    })
+  icon: { type: String, default: '' },
+  iconRight: { type: String, default: '' },
+  iconColor: { type: String, default: '' },
+})
 
-    // attributes
-    const { tagComputed } = useRouterLink(props)
-    const attributesComputed = useButtonAttributes(props)
+// colors
+const { getColor } = useColors()
+const colorComputed = computed(() => getColor(props.color))
 
-    // states
-    const { disabled } = toRefs(props)
-    const button = shallowRef<HTMLElement>()
-    const { focus, blur } = useFocus(button)
-    const { isHovered } = useHover(button, disabled)
-    const { isPressed } = usePressed(button)
+// loader size
+const { sizeComputed } = useSize(props)
+const iconSizeComputed = computed(() => {
+  const size = /([0-9]*)(px)/.exec(sizeComputed.value) as null | [string, string, string]
+  return size ? `${+size[1] / 2}${size[2]}` : sizeComputed.value
+})
 
-    // icon attributes
-    const iconColorComputed = computed(() => props.iconColor ? getColor(props.iconColor) : textColorComputed.value)
-    const iconAttributesComputed = computed(() => ({
-      color: iconColorComputed.value,
-    }))
+// attributes
+const { tagComputed } = useRouterLink(props)
+const attributesComputed = useButtonAttributes(props)
 
-    // classes
-    const wrapperClassComputed = computed(() => ({ 'va-button__content--loading': props.loading }))
+// states
+const { disabled } = toRefs(props)
+const button = shallowRef<HTMLElement>()
+const { focus, blur } = useFocus(button)
+const { isHovered } = useHover(button, disabled)
+const { isPressed } = usePressed(button)
 
-    const isSlotContentPassed = useSlotPassed()
+// icon attributes
+const iconColorComputed = computed(() => props.iconColor ? getColor(props.iconColor) : textColorComputed.value)
+const iconAttributesComputed = computed(() => ({
+  color: iconColorComputed.value,
+  size: props.size,
+}))
 
-    const isOneIcon = computed(() => !!((props.iconRight && !props.icon) || (!props.iconRight && props.icon)))
-    const isOnlyIcon = computed(() => !isSlotContentPassed.value && isOneIcon.value)
-    const computedClass = useBem('va-button', () => ({
-      ...pick(props, ['disabled', 'block', 'loading', 'round', 'plain']),
-      small: props.size === 'small',
-      normal: !props.size || props.size === 'medium',
-      large: props.size === 'large',
-      opacity: props.textOpacity < 1,
-      bordered: !!props.borderColor,
-      iconOnly: isOnlyIcon.value,
-      leftIcon: !isOnlyIcon.value && !!props.icon && !props.iconRight,
-      rightIcon: !isOnlyIcon.value && !props.icon && !!props.iconRight,
-    }))
+// classes
+const wrapperClassComputed = computed(() => ({ 'va-button__content--loading': props.loading }))
 
-    // styles
-    const isTransparentBg = computed(() => props.plain || props.backgroundOpacity < 0.5)
-    const { textColorComputed } = useTextColor(colorComputed, isTransparentBg)
+const isSlotContentPassed = useSlotPassed()
 
-    const {
-      backgroundColor,
-      backgroundColorOpacity,
-      backgroundMaskOpacity,
-      backgroundMaskColor,
-    } = useButtonBackground(colorComputed, isPressed, isHovered)
-    const contentColorComputed = useButtonTextColor(textColorComputed, colorComputed, isPressed, isHovered)
+const isOneIcon = computed(() => !!((props.iconRight && !props.icon) || (!props.iconRight && props.icon)))
+const isOnlyIcon = computed(() => !isSlotContentPassed.value && isOneIcon.value)
+const textOpacityComputed = useNumericProp('textOpacity')
+const backgroundOpacityComputed = useNumericProp('backgroundOpacity')
 
-    const computedStyle = computed(() => ({
-      borderColor: props.borderColor ? getColor(props.borderColor) : 'transparent',
-      ...contentColorComputed.value,
-    }))
+const computedClass = useBem('va-button', () => ({
+  ...pick(props, ['disabled', 'block', 'loading', 'round', 'plain']),
+  small: props.size === 'small',
+  normal: !props.size || props.size === 'medium',
+  large: props.size === 'large',
+  opacity: textOpacityComputed.value! < 1,
+  bordered: !!props.borderColor,
+  iconOnly: isOnlyIcon.value,
+  leftIcon: !isOnlyIcon.value && !!props.icon && !props.iconRight,
+  rightIcon: !isOnlyIcon.value && !props.icon && !!props.iconRight,
+}))
 
-    const publicMethods = { focus, blur }
+// styles
+const isTransparentBg = computed(() => props.plain || backgroundOpacityComputed.value! < 0.5)
+const { textColorComputed } = useTextColor(colorComputed, isTransparentBg)
 
-    return {
-      button,
-      tagComputed,
-      computedClass,
-      computedStyle,
-      textColorComputed,
-      loaderSizeComputed,
-      attributesComputed,
-      wrapperClassComputed,
-      iconAttributesComputed,
+const {
+  backgroundColor,
+  backgroundColorOpacity,
+  backgroundMaskOpacity,
+  backgroundMaskColor,
+} = useButtonBackground(colorComputed, isPressed, isHovered)
+const contentColorComputed = useButtonTextColor(textColorComputed, colorComputed, isPressed, isHovered)
 
-      backgroundColor,
-      backgroundMaskColor,
-      backgroundMaskOpacity,
-      backgroundColorOpacity,
+const computedStyle = computed(() => ({
+  borderColor: props.borderColor ? getColor(props.borderColor) : 'transparent',
+  ...contentColorComputed.value,
+}))
 
-      ...publicMethods,
-    }
-  },
+defineExpose({
+  focus,
+  blur,
 })
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 @import 'variables';
 @import '../../styles/resources';
 
@@ -220,6 +209,7 @@ export default defineComponent({
   box-sizing: border-box;
   cursor: var(--va-button-cursor);
   z-index: 0;
+  vertical-align: top;
 
   &::after,
   &::before {
@@ -269,9 +259,9 @@ export default defineComponent({
     // set icons the same size as text
     .va-button__left-icon,
     .va-button__right-icon {
-      font-size: var(--va-button-sm-line-height) !important;
-      height: var(--va-button-sm-line-height) !important;
-      line-height: var(--va-button-sm-line-height) !important;
+      // font-size: var(--va-button-sm-line-height) !important;
+      // height: var(--va-button-sm-line-height) !important;
+      // line-height: var(--va-button-sm-line-height) !important;
     }
 
     .va-button__left-icon {
@@ -318,17 +308,17 @@ export default defineComponent({
     // set icons the same size as text
     .va-button__left-icon,
     .va-button__right-icon {
-      font-size: var(--va-button-line-height) !important;
-      height: var(--va-button-line-height) !important;
-      line-height: var(--va-button-line-height) !important;
+      // font-size: var(--va-button-line-height) !important;
+      // height: var(--va-button-line-height) !important;
+      // line-height: var(--va-button-line-height) !important;
     }
 
     .va-button__left-icon {
-      margin-right: var(--va-button-icons-spacing);
+      margin-right: var(--va-gap-medium);
     }
 
     .va-button__right-icon {
-      margin-left: var(--va-button-icons-spacing);
+      margin-left: var(--va-gap-medium);
     }
 
     &.va-button--bordered {
@@ -340,13 +330,13 @@ export default defineComponent({
 
     &.va-button--left-icon {
       .va-button__content {
-        padding-left: var(--va-button-icon-side-padding);
+        // padding-left: var(--va-button-icon-side-padding);
       }
     }
 
     &.va-button--right-icon {
       .va-button__content {
-        padding-right: var(--va-button-icon-side-padding);
+        // padding-right: var(--va-button-icon-side-padding);
       }
     }
   }
@@ -366,9 +356,9 @@ export default defineComponent({
     // set icons the same size as text
     .va-button__left-icon,
     .va-button__right-icon {
-      font-size: var(--va-button-lg-line-height) !important;
-      height: var(--va-button-lg-line-height) !important;
-      line-height: var(--va-button-lg-line-height) !important;
+      // font-size: var(--va-button-lg-line-height) !important;
+      // height: var(--va-button-lg-line-height) !important;
+      // line-height: var(--va-button-lg-line-height) !important;
     }
 
     .va-button__left-icon {
@@ -438,6 +428,10 @@ export default defineComponent({
     .va-button__right-icon {
       margin-left: 0;
       margin-right: 0;
+    }
+
+    .va-button__content {
+      padding: 0;
     }
   }
 

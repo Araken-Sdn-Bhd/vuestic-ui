@@ -96,7 +96,7 @@
 
     <VbCard title="weekends">
       <va-date-input v-model="value" label="Highlight weekend" highlight-weekends class="mb-6" />
-      <va-date-input v-model="value" label="Every second day is weekend" highlight-weekends :weekends="(date) => date.getDay() % 2 === 0" class="mb-6" />
+      <va-date-input v-model="value" label="Every second day is weekend" highlight-weekends :weekends="(date: Date) => date.getDay() % 2 === 0" class="mb-6" />
     </VbCard>
 
     <VbCard title="dropdown">
@@ -148,7 +148,7 @@
     </VbCard>
 
     <VbCard title="disable dates">
-      <va-date-input v-model="value" label="Disable all Tuesday and Thursday" :allowedDays="(date) => date.getDay() !== 2 && date.getDay() !== 4" />
+      <va-date-input v-model="value" label="Disable all Tuesday and Thursday" :allowedDays="(date: Date) => date.getDay() !== 2 && date.getDay() !== 4" />
     </VbCard>
 
     <VbCard title="Manual Input">
@@ -209,34 +209,38 @@
 import { VaDateInput } from './index'
 import { VaChip } from '../va-chip'
 import { VaButton } from '../va-button'
+import { getStaticDate } from '../../../.storybook/interaction-utils/addText'
+import { ValidationRule } from '../../composables'
+import { DateInputModelValue } from '@/components/va-date-input/types'
+import { DatePickerView } from '@/components/va-date-picker/types'
 
 const datePlusDay = (date: Date, days: number) => {
   const d = new Date(date)
   d.setDate(d.getDate() + days)
   return d
 }
-const nextWeek = datePlusDay(new Date(), 7)
+const nextWeek = datePlusDay(getStaticDate(), 7)
 
 export default {
   components: { VaButton, VaDateInput, VaChip },
   data () {
     return {
-      value: new Date(),
-      range: { start: new Date(), end: nextWeek },
-      dates: [new Date(), nextWeek],
-      dayView: { type: 'day', month: 3, year: 2013 },
-      string: new Date().toString(),
-      strings: [Date.now() + 1e9, new Date().toString()],
-      stringRange: { start: new Date().toString(), end: Date.now() + 1e9 },
+      value: getStaticDate(),
+      range: { start: getStaticDate(), end: nextWeek },
+      dates: [getStaticDate(), nextWeek],
+      dayView: { type: 'day', month: 3, year: 2013 } as DatePickerView,
+      string: getStaticDate().toString(),
+      strings: [getStaticDate().getTime() + 1e9, getStaticDate().toString()] as DateInputModelValue,
+      stringRange: { start: getStaticDate().toString(), end: getStaticDate().getTime() + 1e9 } as DateInputModelValue,
 
       validationRules1: [(value: Date) => {
         return !!value || 'Should be value'
-      }],
+      }] as ValidationRule<DateInputModelValue>[],
 
       validationRules2: [(value: Date) => {
         if (!value) { return true }
         return value.getDate?.() === 10 || 'Should be 10th day'
-      }],
+      }] as ValidationRule<DateInputModelValue>[],
 
       // Dropdown
       isOpen: false,

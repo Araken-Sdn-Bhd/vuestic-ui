@@ -1,39 +1,39 @@
 <template>
-  <va-list>
-    <va-list-label color="#ff0000">
+  <VaList>
+    <VaListLabel color="#ff0000">
       Blocked
-    </va-list-label>
+    </VaListLabel>
 
-    <va-list-item
+    <VaListItem
       v-for="(contact, index) in contacts"
       :key="index"
       class="list__item"
       disabled
     >
-      <va-list-item-section avatar>
-        <va-avatar>
-          <img :src="contact.img">
-        </va-avatar>
-      </va-list-item-section>
+      <VaListItemSection avatar>
+        <VaAvatar>
+          <img :src="contact.img" :alt="contact.name">
+        </VaAvatar>
+      </VaListItemSection>
 
-      <va-list-item-section>
-        <va-list-item-label>
+      <VaListItemSection>
+        <VaListItemLabel>
           {{ contact.name }}
-        </va-list-item-label>
+        </VaListItemLabel>
 
-        <va-list-item-label caption>
+        <VaListItemLabel caption>
           {{ contact.address }}
-        </va-list-item-label>
-      </va-list-item-section>
+        </VaListItemLabel>
+      </VaListItemSection>
 
-      <va-list-item-section icon>
-        <va-icon
+      <VaListItemSection icon>
+        <VaIcon
           name="remove_red_eye"
-          color="background-tertiary"
+          color="background-element"
         />
-      </va-list-item-section>
-    </va-list-item>
-  </va-list>
+      </VaListItemSection>
+    </VaListItem>
+  </VaList>
 </template>
 
 <script>

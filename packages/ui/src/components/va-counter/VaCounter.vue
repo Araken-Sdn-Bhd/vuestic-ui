@@ -1,10 +1,12 @@
 <template>
   <va-input-wrapper
     class="va-counter"
-    v-bind="{ ...fieldListeners, ...inputWrapperPropsComputed }"
+    v-bind="{ ...fieldListeners, ...inputWrapperPropsComputed, ...validationListeners }"
     :class="classComputed"
     :style="styleComputed"
     :focused="isFocused"
+    :error="computedError"
+    :error-messages="computedErrorMessages"
     @keydown.up.prevent="increaseCount"
     @keydown.right.prevent="increaseCount"
     @keydown.down.prevent="decreaseCount"
@@ -19,7 +21,6 @@
         <slot name="decreaseAction" v-bind="{ ...slotScope, decreaseCount }">
           <va-button
             class="va-counter__button-decrease"
-            :aria-label="tp($props.ariaDecreaseLabel)"
             v-bind="decreaseButtonProps"
             ref="decreaseButtonRef"
           />
@@ -50,7 +51,6 @@
         <slot name="increaseAction" v-bind="{ ...slotScope, increaseCount }">
           <va-button
             class="va-counter__button-increase"
-            :aria-label="tp($props.ariaIncreaseLabel)"
             v-bind="increaseButtonProps"
             ref="increaseButtonRef"
           />
@@ -89,6 +89,7 @@
       inputmode="decimal"
       v-bind="{ ...inputAttributesComputed, ...inputListeners }"
       :value="valueComputed"
+      :aria-live="$props.disabled ? 'off' : 'polite'"
       @input="setCountInput"
       @change="setCountChange"
     />
@@ -96,18 +97,7 @@
 </template>
 
 <script lang="ts">
-import {
-  toRefs,
-  computed,
-  shallowRef,
-  defineComponent,
-  InputHTMLAttributes,
-  PropType,
-  ComputedRef,
-  toRef,
-} from 'vue'
-import omit from 'lodash/omit'
-import pick from 'lodash/pick'
+import { toRefs, computed, shallowRef, InputHTMLAttributes, ComputedRef, toRef, useAttrs, useSlots, ref } from 'vue'
 
 import { safeCSSLength } from '../../utils/css'
 import {
@@ -117,14 +107,23 @@ import {
   useFocus, useFocusEmits,
   useStateful, useStatefulProps,
   useColors,
-  useTranslation,
+  useTranslation, useTranslationProp,
   useLongPress,
   useTemplateRef,
+  useValidation,
+  useClearableProps,
+  useValidationEmits,
+  useNumericProp,
 } from '../../composables'
 import useCounterPropsValidation from './hooks/useCounterPropsValidation'
 
-import { VaInputWrapper } from '../va-input'
+import { VaInputWrapper } from '../va-input-wrapper'
 import { VaButton } from '../va-button'
+import { extractComponentProps, filterComponentProps } from '../../utils/component-options'
+import { toFloat } from '../../utils/to-float'
+import { pick } from '../../utils/pick'
+import { omit } from '../../utils/omit'
+import { isNilValue } from '../../utils/isNilValue'
 
 const { createEmits: createInputEmits, createListeners: createInputListeners } = useEmitProxy(
   ['change'],
@@ -137,259 +136,266 @@ const { createEmits: createFieldEmits, createListeners: createFieldListeners } =
   { listen: 'click-append-inner', emit: 'click:increase-icon' },
 ])
 
-export default defineComponent({
+const VaInputWrapperProps = extractComponentProps(VaInputWrapper)
+</script>
+
+<script lang="ts" setup>
+
+defineOptions({
   name: 'VaCounter',
-
-  components: { VaInputWrapper, VaButton },
-
-  props: {
-    ...useFormFieldProps,
-    ...useStatefulProps,
-    ...useComponentPresetProp,
-    // input
-    modelValue: { type: [String, Number], default: 0 },
-    manualInput: { type: Boolean, default: false },
-    stateful: { type: Boolean, default: false },
-    min: { type: Number, default: undefined },
-    max: { type: Number, default: undefined },
-    step: { type: Number, default: 1 },
-    label: { type: String, default: '' },
-    // hint
-    messages: { type: [Array, String] as PropType<string[] | string>, default: () => [] },
-    // style
-    width: { type: [String, Number], default: '160px' },
-    color: { type: String, default: 'primary' },
-    outline: { type: Boolean },
-    bordered: { type: Boolean },
-    // icons & buttons
-    increaseIcon: { type: String, default: 'add' },
-    decreaseIcon: { type: String, default: 'remove' },
-    buttons: { type: Boolean, default: false },
-    flat: { type: Boolean, default: true },
-    rounded: { type: Boolean, default: false },
-    margins: { type: [String, Number], default: '4px' },
-    textColor: { type: String, default: undefined },
-    longPressDelay: { type: Number, default: 500 },
-
-    ariaLabel: { type: String, default: '$t:counterValue' },
-    ariaDecreaseLabel: { type: String, default: '$t:decreaseCounter' },
-    ariaIncreaseLabel: { type: String, default: '$t:increaseCounter' },
-  },
-
-  emits: [
-    'update:modelValue',
-    ...createInputEmits(),
-    ...createFieldEmits(),
-    ...useFocusEmits,
-  ],
-
   inheritAttrs: false,
+})
 
-  setup (props, { emit, attrs, slots }) {
-    const input = shallowRef<HTMLInputElement | HTMLDivElement>()
-    const { min, max, step } = toRefs(props)
+const props = defineProps({
+  ...useFormFieldProps,
+  ...useStatefulProps,
+  ...useComponentPresetProp,
+  ...useClearableProps,
+  ...VaInputWrapperProps,
+    // input
+  modelValue: { type: [String, Number], default: 0 },
+  manualInput: { type: Boolean, default: false },
+  min: { type: [Number, String] },
+  max: { type: [Number, String] },
+  step: { type: [Number, String], default: 1 },
+  color: { type: String, default: 'primary' },
+    // icons & buttons
+  increaseIcon: { type: String, default: 'va-plus' },
+  decreaseIcon: { type: String, default: 'va-minus' },
+  buttons: { type: Boolean, default: false },
+  flat: { type: Boolean, default: true },
+  rounded: { type: Boolean, default: false },
+  margins: { type: [String, Number], default: '4px' },
+  longPressDelay: { type: [Number, String], default: 500 },
 
-    const {
-      isFocused,
-      focus,
-      blur,
-    } = useFocus(input, emit)
+  ariaLabel: useTranslationProp('$t:counterValue'),
+  ariaDecreaseLabel: useTranslationProp('$t:decreaseCounter'),
+  ariaIncreaseLabel: useTranslationProp('$t:increaseCounter'),
+})
 
-    const { valueComputed } = useStateful(props, emit)
+const emit = defineEmits([
+  'update:modelValue',
+  ...useValidationEmits,
+  ...createInputEmits(),
+  ...createFieldEmits(),
+  ...useFocusEmits,
+])
 
-    const setCountInput = ({ target }: Event) => {
-      valueComputed.value = Number((target as HTMLInputElement | null)?.value)
-    }
+const input = shallowRef<HTMLInputElement | HTMLDivElement>()
 
-    const setCountChange = ({ target }: Event) => {
-      calculateCounterValue(Number((target as HTMLInputElement | null)?.value))
-    }
+const { min = ref(undefined), max = ref(undefined), step } = toRefs(props)
 
-    const getRoundDownWithStep = (value: number) => {
-      if (typeof min.value === 'undefined' || !step.value) { return value }
+const longPressDelayComputed = useNumericProp('longPressDelay')
+const {
+  isFocused,
+  focus,
+  blur,
+} = useFocus(input, emit)
 
-      // If the user enters a value manually, then we must round it to the nearest valid value,
-      // taking into account the initial value (`props.min`) and the step size (`props.step`)
-      return min.value + step.value * Math.floor((value - min.value) / step.value)
-    }
+const { valueComputed: statefulValue } = useStateful(props, emit)
 
-    const calculateCounterValue = (counterValue: number) => {
-      if (typeof min.value !== 'undefined' && counterValue < min.value) {
-        valueComputed.value = min.value
-        return
-      }
+function floatify (num: number | string) {
+  return parseFloat(Number(num).toFixed(10))
+}
 
-      if (max.value && (counterValue > max.value)) {
-        // since the `props.step` may not be a multiple of `(props.max - props.min)`,
-        // we must round the result taking into account the allowable value
-        valueComputed.value = getRoundDownWithStep(max.value)
-        return
-      }
+const valueComputed = computed({
+  get () { return statefulValue.value },
+  set (v) { statefulValue.value = floatify(v) },
+})
 
-      valueComputed.value = getRoundDownWithStep(counterValue)
-    }
+const reset = () => withoutValidation(() => {
+  emit('update:modelValue', props.clearValue)
+  emit('clear')
+  resetValidation()
+})
 
-    const isMinReached = computed(() => {
-      if (typeof min.value === 'undefined') { return false }
+const {
+  computedError,
+  computedErrorMessages,
+  withoutValidation,
+  resetValidation,
+  listeners: validationListeners,
+  isDirty,
+  isTouched,
+} = useValidation(props, emit, { reset, focus, value: valueComputed })
 
-      return Number(valueComputed.value) <= min.value
-    })
+const setCountInput = ({ target }: Event) => {
+  valueComputed.value = Number((target as HTMLInputElement | null)?.value)
+}
 
-    const isMaxReached = computed(() => {
-      if (!max.value) { return false }
+const setCountChange = ({ target }: Event) => {
+  calculateCounterValue(Number((target as HTMLInputElement | null)?.value))
+}
 
-      return step.value
-        ? Number(valueComputed.value) > (max.value - step.value)
-        : Number(valueComputed.value) >= max.value
-    })
+const getRoundDownWithStep = (value: number) => {
+  if (typeof min.value === 'undefined' || !Number(step.value)) { return value }
 
-    const tabIndexComputed = computed(() => props.disabled ? -1 : 0)
+  // If the user enters a value manually, then we must round it to the nearest valid value,
+  // taking into account the initial value (`props.min`) and the step size (`props.step`)
+  return toFloat(Number(min.value) + Number(step.value) * ((Number(value) - Number(min.value)) / Number(step.value)))
+}
 
-    const isDecreaseActionDisabled = computed(() => (
-      isMinReached.value || props.readonly || props.disabled
-    ))
+const calculateCounterValue = (counterValue: number) => {
+  if (typeof min.value !== 'undefined' && counterValue < Number(min.value)) {
+    valueComputed.value = Number(min.value)
+    return
+  }
 
-    const isIncreaseActionDisabled = computed(() => (
-      isMaxReached.value || props.readonly || props.disabled
-    ))
+  if (typeof max.value !== 'undefined' && (counterValue > Number(max.value))) {
+    // since the `props.step` may not be a multiple of `(props.max - props.min)`,
+    // we must round the result taking into account the allowable value
+    valueComputed.value = getRoundDownWithStep(Number(max.value))
+    return
+  }
 
-    const decreaseCount = () => {
-      if (isDecreaseActionDisabled.value) { return }
-      calculateCounterValue(Number(valueComputed.value) - step.value)
-    }
+  valueComputed.value = getRoundDownWithStep(counterValue)
+}
 
-    const increaseCount = () => {
-      if (isIncreaseActionDisabled.value) { return }
-      calculateCounterValue(Number(valueComputed.value) + step.value)
-    }
+const isMinReached = computed(() => {
+  if (isNilValue(min.value)) { return false }
 
-    useLongPress(useTemplateRef('decreaseButtonRef'), {
-      onUpdate: decreaseCount,
-      delay: toRef(props, 'longPressDelay'),
-    })
+  return Number(valueComputed.value) <= Number(min.value)
+})
 
-    useLongPress(useTemplateRef('increaseButtonRef'), {
-      onUpdate: increaseCount,
-      delay: toRef(props, 'longPressDelay'),
-    })
+const isMaxReached = computed(() => {
+  if (isNilValue(max.value)) { return false }
 
-    const { getColor } = useColors()
-    const colorComputed = computed(() => getColor(props.color))
+  return step.value
+    ? Number(valueComputed.value) > (Number(max.value) - Number(step.value))
+    : Number(valueComputed.value) >= Number(max.value)
+})
 
-    const decreaseIconProps = computed(() => ({
-      class: { 'va-counter__icon--inactive': isDecreaseActionDisabled.value },
-      color: colorComputed.value,
-      icon: props.decreaseIcon,
-      plain: true,
-      disabled: isDecreaseActionDisabled.value,
-      tabindex: -1,
-      ...(!isDecreaseActionDisabled.value && { onClick: decreaseCount }),
-    }))
+const tabIndexComputed = computed(() => props.disabled ? -1 : 0)
 
-    const increaseIconProps = computed(() => ({
-      class: { 'va-counter__icon--inactive': isIncreaseActionDisabled.value },
-      color: colorComputed.value,
-      icon: props.increaseIcon,
-      plain: true,
-      disabled: isIncreaseActionDisabled.value,
-      tabindex: -1,
-      ...(!isIncreaseActionDisabled.value && { onClick: increaseCount }),
-    }))
+const isDecreaseActionDisabled = computed(() => (
+  isMinReached.value || props.disabled || props.readonly
+))
 
-    const isSquareCorners = computed(() => (
-      (typeof props.margins === 'string' ? parseFloat(props.margins) : props.margins) === 0
-    ))
+const isIncreaseActionDisabled = computed(() => (
+  isMaxReached.value || props.disabled || props.readonly
+))
 
-    const buttonsColor = () => {
-      if (isFocused.value) { return props.color }
+const decreaseCount = () => {
+  if (isDecreaseActionDisabled.value) { return }
+  calculateCounterValue(Number(valueComputed.value) - Number(step.value))
+}
 
-      return 'background-border'
-    }
+const increaseCount = () => {
+  if (isIncreaseActionDisabled.value) { return }
+  calculateCounterValue(Number(valueComputed.value) + Number(step.value))
+}
 
-    const buttonProps = computed(() => ({
-      ...pick(props, ['color', 'textColor']),
-      round: props.rounded,
-      preset: props.flat ? 'secondary' : '',
-      borderColor: (props.outline && props.flat) ? buttonsColor() : '',
-    }))
+useLongPress(useTemplateRef('decreaseButtonRef'), {
+  onUpdate: decreaseCount,
+  delay: longPressDelayComputed as ComputedRef<number>,
+})
 
-    const decreaseButtonProps = computed(() => ({
-      ...buttonProps.value,
-      icon: props.decreaseIcon,
-      disabled: isDecreaseActionDisabled.value,
-      ariaLabel: tp(props.ariaDecreaseLabel),
-      ...(!isDecreaseActionDisabled.value && { onClick: decreaseCount }),
-    }))
+useLongPress(useTemplateRef('increaseButtonRef'), {
+  onUpdate: increaseCount,
+  delay: longPressDelayComputed as ComputedRef<number>,
+})
 
-    const increaseButtonProps = computed(() => ({
-      ...buttonProps.value,
-      icon: props.increaseIcon,
-      disabled: isIncreaseActionDisabled.value,
-      ariaLabel: tp(props.ariaIncreaseLabel),
-      ...(!isIncreaseActionDisabled.value && { onClick: increaseCount }),
-    }))
+const { getColor } = useColors()
+const colorComputed = computed(() => getColor(props.color))
 
-    const { tp } = useTranslation()
+const decreaseIconProps = computed(() => ({
+  class: { 'va-counter__icon--inactive': isDecreaseActionDisabled.value },
+  color: colorComputed.value,
+  icon: props.decreaseIcon,
+  plain: true,
+  disabled: isDecreaseActionDisabled.value,
+  readonly: props.readonly,
+  tabindex: -1,
+  'aria-label': tp(props.ariaDecreaseLabel),
+  ...(!isDecreaseActionDisabled.value && { onClick: decreaseCount }),
+}))
 
-    const inputAttributesComputed = computed(() => ({
-      tabindex: tabIndexComputed.value,
-      'aria-label': tp(props.ariaLabel),
-      'aria-valuemin': min.value,
-      'aria-valuemax': max.value,
-      ...omit(attrs, ['class', 'style']),
-      ...pick(props, ['disabled', 'min', 'max', 'step']),
-      readonly: props.readonly || !props.manualInput,
-    }) as InputHTMLAttributes)
+const increaseIconProps = computed(() => ({
+  class: { 'va-counter__icon--inactive': isIncreaseActionDisabled.value },
+  color: colorComputed.value,
+  icon: props.increaseIcon,
+  plain: true,
+  disabled: isIncreaseActionDisabled.value,
+  readonly: props.readonly,
+  tabindex: -1,
+  'aria-label': tp(props.ariaIncreaseLabel),
+  ...(!isIncreaseActionDisabled.value && { onClick: increaseCount }),
+}))
 
-    const inputWrapperPropsComputed = computed(() => ({
-      ...pick(props, ['color', 'readonly', 'disabled', 'messages', 'label', 'bordered', 'outline']),
-    }))
+const isSquareCorners = computed(() => (
+  (typeof props.margins === 'string' ? parseFloat(props.margins) : props.margins) === 0
+))
 
-    const classComputed = computed(() => ([
-      attrs.class,
-      { 'va-counter--input-square': isSquareCorners.value },
-      { 'va-counter--content-slot': slots.content && props.buttons },
-    ]))
+const buttonsColor = () => {
+  if (isFocused.value) { return props.color }
 
-    const styleComputed: ComputedRef<Partial<CSSStyleDeclaration>> = computed(() => ({
-      width: safeCSSLength(props.width),
-      ...((attrs.style as Partial<CSSStyleDeclaration>) || {}),
-    }))
+  return 'background-border'
+}
 
-    const marginComputed = computed(() => safeCSSLength(props.margins))
+const buttonProps = computed(() => ({
+  ...pick(props, ['color']),
+  round: props.rounded,
+  preset: props.flat ? 'secondary' : '',
+  borderColor: (props.flat) ? buttonsColor() : '',
+}))
 
-    useCounterPropsValidation(props)
+const decreaseButtonProps = computed(() => ({
+  ...buttonProps.value,
+  icon: props.decreaseIcon,
+  disabled: isDecreaseActionDisabled.value,
+  'aria-label': tp(props.ariaDecreaseLabel),
+  ...(!isDecreaseActionDisabled.value && { onClick: decreaseCount }),
+}))
 
-    return {
-      tp,
-      input,
-      valueComputed,
-      isFocused,
+const increaseButtonProps = computed(() => ({
+  ...buttonProps.value,
+  icon: props.increaseIcon,
+  disabled: isIncreaseActionDisabled.value,
+  'aria-label': tp(props.ariaIncreaseLabel),
+  ...(!isIncreaseActionDisabled.value && { onClick: increaseCount }),
+}))
 
-      fieldListeners: createFieldListeners(emit),
-      inputListeners: createInputListeners(emit),
-      inputAttributesComputed,
-      inputWrapperPropsComputed,
-      setCountInput,
-      setCountChange,
+const { tp } = useTranslation()
 
-      decreaseCount,
-      increaseCount,
+const attrs = useAttrs()
+const slots = useSlots()
 
-      decreaseIconProps,
-      increaseIconProps,
-      decreaseButtonProps,
-      increaseButtonProps,
+const inputAttributesComputed = computed(() => (({
+  tabindex: tabIndexComputed.value,
+  'aria-label': tp(props.ariaLabel),
+  'aria-valuemin': Number(min.value),
+  'aria-valuemax': Number(max.value),
+  ...omit(attrs, ['class', 'style']),
+  ...pick(props, ['disabled', 'min', 'max', 'step']),
+  readonly: props.readonly || !props.manualInput,
+}) as InputHTMLAttributes))
 
-      colorComputed,
-      classComputed,
-      styleComputed,
-      marginComputed,
+const classComputed = computed(() => ([
+  attrs.class,
+  { 'va-counter--input-square': isSquareCorners.value },
+  { 'va-counter--content-slot': slots.content && props.buttons },
+].filter(Boolean)))
 
-      focus,
-      blur,
-    }
-  },
+const styleComputed: ComputedRef<Partial<CSSStyleDeclaration>> = computed(() => ({
+  ...((attrs.style as Partial<CSSStyleDeclaration>) || {}),
+}))
+
+const marginComputed = computed(() => safeCSSLength(props.margins))
+
+useCounterPropsValidation(props)
+
+const fieldListeners = createFieldListeners(emit)
+const inputListeners = createInputListeners(emit)
+const inputWrapperPropsComputed = filterComponentProps(VaInputWrapperProps)
+
+defineExpose({
+  isDirty,
+  isTouched,
+  focus,
+  blur,
+  decreaseCount,
+  increaseCount,
+  reset,
 })
 </script>
 
@@ -397,14 +403,10 @@ export default defineComponent({
 @import "variables";
 
 .va-counter {
-  &.va-input-wrapper {
-    min-width: unset;
-    flex: none;
+  --va-input-wrapper-width: var(--va-form-element-default-width-small);
 
-    .va-input-wrapper__field {
-      width: unset;
-    }
-  }
+  min-width: unset;
+  flex: none;
 
   .va-input-wrapper__field > *,
   .va-input-wrapper__container > * {
@@ -428,11 +430,6 @@ export default defineComponent({
 
       .va-counter__button-decrease:not(.va-button--square) {
         width: unset;
-
-        .va-button__content {
-          padding-right: var(--va-counter-button-inner-padding);
-          padding-left: var(--va-counter-button-outer-padding);
-        }
       }
     }
 
@@ -446,11 +443,6 @@ export default defineComponent({
 
       .va-counter__button-increase:not(.va-button--square) {
         width: unset;
-
-        .va-button__content {
-          padding-left: var(--va-counter-button-inner-padding);
-          padding-right: var(--va-counter-button-outer-padding);
-        }
       }
     }
   }
@@ -492,13 +484,8 @@ export default defineComponent({
   }
 
   .va-input-wrapper__field {
-    align-items: stretch;
     padding: 0;
-
-    .va-input-wrapper__text,
-    .va-input__container {
-      padding-right: 0;
-    }
+    width: unset;
   }
 
   &__prepend-inner,

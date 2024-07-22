@@ -1,34 +1,28 @@
 <template>
-  <div class="max-w-xs">
-    <va-select
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Readonly"
       :options="options"
       readonly
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Disabled"
       :options="options"
       disabled
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Loading"
       :options="options"
       loading
     />
-    <va-select
-      v-model="value"
-      class="mb-6"
-      label="Error state"
-      :options="options"
-      error
-    />
-    <va-select
+    <div />
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Error state with messages"
@@ -36,14 +30,7 @@
       error
       :error-messages="['Error message']"
     />
-    <va-select
-      v-model="value"
-      class="mb-6"
-      label="Success state"
-      :options="options"
-      success
-    />
-    <va-select
+    <VaSelect
       v-model="value"
       label="Success state with messages"
       :options="options"

@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-xs">
-    <va-select
+    <VaSelect
       v-model="value"
       :options="options"
       :max-visible-options="2"
@@ -12,7 +12,7 @@
 <script setup>
 import { ref } from "vue";
 
-const value = ref([]);
+const value = ref(["one", "two", "three", "four", "five"]);
 
 const options = [
   "one",

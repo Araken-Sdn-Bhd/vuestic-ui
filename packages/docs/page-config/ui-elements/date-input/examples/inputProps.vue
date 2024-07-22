@@ -1,44 +1,60 @@
 <template>
-  <va-date-input
-    class="mb-6 mr-6"
-    label="readonly"
-    readonly
-  />
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+    <VaDateInput
+      v-model="value"
+      label="readonly"
+      readonly
+    />
 
-  <va-date-input
-    class="mb-6 mr-6"
-    label="disabled"
-    disabled
-  />
+    <VaDateInput
+      v-model="value"
+      label="disabled"
+      disabled
+    />
 
-  <va-date-input
-    class="mb-6 mr-6"
-    label="color"
-    color="#ff00ff"
-  />
+    <VaDateInput
+      v-model="value"
+      label="color"
+      color="#ff00ff"
+    />
 
-  <va-date-input
-    class="mb-6 mr-6"
-    label="placeholder"
-    placeholder="Custom placeholder"
-  />
+    <VaDateInput
+      label="placeholder"
+      placeholder="Custom placeholder"
+    />
 
-  <va-date-input
-    class="mb-6 mr-6"
-    label="clearable"
-    stateful
-    clearable
-  />
+    <VaDateInput
+      v-model="value"
+      label="clearable"
+      clearable
+    />
 
-  <va-date-input
-    class="mb-6 mr-6"
-    label="outline"
-    outline
-  />
+    <VaDateInput
+      v-model="value"
+      label="solid"
+      preset="solid"
+    />
 
-  <va-date-input
-    class="mb-6 mr-6"
-    label="bordered"
-    bordered
-  />
+    <VaDateInput
+      v-model="value"
+      label="bordered"
+      preset="bordered"
+    />
+
+    <VaDateInput
+      v-model="value"
+      label="inner label"
+      inner-label
+    />
+  </div>
 </template>
+
+<script>
+  export default {
+    data() {
+      return {
+        value: new Date(2000, 0, 1)
+      }
+    }
+  }
+</script>

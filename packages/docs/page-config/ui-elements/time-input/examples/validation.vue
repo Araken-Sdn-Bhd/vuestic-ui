@@ -1,28 +1,23 @@
 <template>
-  <div class="flex mb-6">
-    <va-time-input
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+    <VaTimeInput
       v-model="value"
       manual-input
       :messages="['Hello world']"
-      class="mr-3"
     />
-    <va-time-input
+    <VaTimeInput
       v-model="value"
       success
       :messages="['Hello world']"
       manual-input
     />
-  </div>
-
-  <div class="flex">
-    <va-time-input
+    <VaTimeInput
       v-model="value"
       error
       :error-messages="['Bye world!']"
       manual-input
-      class="mr-3"
     />
-    <va-time-input
+    <VaTimeInput
       v-model="value"
       label="accept only hours < 12"
       :rules="[

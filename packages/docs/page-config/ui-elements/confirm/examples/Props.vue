@@ -1,5 +1,7 @@
 <template>
-  <va-button @click="onButtonClick">Not everyone can click this button...</va-button>
+  <VaButton @click="onButtonClick">
+    Not everyone can click this button...
+  </VaButton>
 </template>
 
 <script setup lang="ts">
@@ -14,7 +16,7 @@
       okText: "I'm brave",
       cancelText: "I'm scared!",
     })
-    
+
     if (result) {
       alert("Bow to me! I'm the mighty browser alert! MWAHAH")
     } else {

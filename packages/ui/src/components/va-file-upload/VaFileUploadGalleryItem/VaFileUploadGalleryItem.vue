@@ -48,10 +48,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, PropType, ref, watch, computed, toRef } from 'vue'
+import { onMounted, PropType, ref, watch, computed, toRef } from 'vue'
 
 import { colorToRgba } from '../../../services/color'
-import { useFocus, useBem, useStrictInject, useTranslation } from '../../../composables'
+import { useFocus, useBem, useStrictInject, useTranslation, useTranslationProp } from '../../../composables'
 
 import { VaFileUploadKey, ConvertedFile } from '../types'
 import { useTextColor } from '../../../composables/useTextColor'
@@ -60,105 +60,85 @@ import { VaButton, VaListItem, VaListItemSection } from '../../index'
 import { VaFileUploadUndo } from '../VaFileUploadUndo'
 
 const INJECTION_ERROR_MESSAGE = 'The VaFileUploadGalleryItem component should be used in the context of VaFileUpload component'
-
-export default defineComponent({
-  name: 'VaFileUploadGalleryItem',
-
-  components: {
-    VaFileUploadUndo,
-    VaButton,
-    VaListItem,
-    VaListItemSection,
-  },
-
-  emits: ['remove'],
-
-  props: {
-    file: { type: Object as PropType<ConvertedFile>, default: null },
-    color: { type: String, default: 'success' },
-
-    ariaRemoveFileLabel: { type: String, default: '$t:removeFile' },
-  },
-
-  setup (props, { emit }) {
-    const {
-      undo,
-      disabled,
-      undoDuration,
-    } = useStrictInject(VaFileUploadKey, INJECTION_ERROR_MESSAGE)
-    const { isFocused, onFocus, onBlur } = useFocus()
-    const previewImage = ref('')
-    const removed = ref(false)
-
-    const overlayStylesComputed = computed(() => ({
-      backgroundColor: colorToRgba(props.color, 0.7),
-    }))
-
-    const classesComputed = useBem('va-file-upload-gallery-item', () => ({
-      notImage: !previewImage.value,
-      focused: isFocused.value,
-      undo: removed.value,
-    }))
-
-    const removeImage = () => {
-      if (undo.value) {
-        removed.value = true
-
-        setTimeout(() => {
-          if (!removed.value) { return }
-
-          emit('remove')
-          removed.value = false
-        }, undoDuration.value ?? 0)
-      } else {
-        emit('remove')
-        removed.value = false
-      }
-    }
-
-    const recoverImage = () => { removed.value = false }
-
-    const convertToImg = () => {
-      if (!props.file.name || !props.file.image) { return }
-
-      if (props.file.image.url) {
-        previewImage.value = props.file.image.url
-      } else if (props.file.image instanceof File) {
-        const reader = new FileReader()
-
-        reader.readAsDataURL(props.file.image)
-        reader.onload = (e) => {
-          if ((e.target?.result as string).includes('image')) {
-            previewImage.value = e.target?.result as string
-          }
-        }
-      }
-    }
-
-    onMounted(convertToImg)
-    watch(() => props.file, convertToImg)
-
-    return {
-      ...useTranslation(),
-      undo,
-      ...useTextColor(toRef(props, 'color')),
-      removed,
-      disabled,
-      isFocused,
-      previewImage,
-      classesComputed,
-      overlayStylesComputed,
-
-      onBlur,
-      onFocus,
-      removeImage,
-      recoverImage,
-    }
-  },
-})
 </script>
 
-<style lang='scss'>
+<script lang="ts" setup>
+
+defineOptions({
+  name: 'VaFileUploadGalleryItem',
+})
+
+const props = defineProps({
+  file: { type: Object as PropType<ConvertedFile>, default: null },
+  color: { type: String, default: 'success' },
+
+  ariaRemoveFileLabel: useTranslationProp('$t:removeFile'),
+})
+
+const emit = defineEmits(['remove'])
+
+const {
+  undo,
+  disabled,
+  undoDuration,
+} = useStrictInject(VaFileUploadKey, INJECTION_ERROR_MESSAGE)
+const { isFocused, onFocus, onBlur } = useFocus()
+const previewImage = ref('')
+const removed = ref(false)
+
+const overlayStylesComputed = computed(() => ({
+  backgroundColor: colorToRgba(props.color, 0.7),
+}))
+
+const classesComputed = useBem('va-file-upload-gallery-item', () => ({
+  notImage: !previewImage.value,
+  focused: isFocused.value,
+  undo: removed.value,
+}))
+
+const removeImage = () => {
+  if (undo.value) {
+    removed.value = true
+
+    setTimeout(() => {
+      if (!removed.value) { return }
+
+      emit('remove')
+      removed.value = false
+    }, undoDuration.value ?? 0)
+  } else {
+    emit('remove')
+    removed.value = false
+  }
+}
+
+const recoverImage = () => { removed.value = false }
+
+const convertToImg = () => {
+  if (!props.file.name || !props.file.image) { return }
+
+  if (props.file.image.url) {
+    previewImage.value = props.file.image.url
+  } else if (props.file.image instanceof File) {
+    const reader = new FileReader()
+
+    reader.readAsDataURL(props.file.image)
+    reader.onload = (e) => {
+      if ((e.target?.result as string).includes('image')) {
+        previewImage.value = e.target?.result as string
+      }
+    }
+  }
+}
+
+onMounted(convertToImg)
+watch(() => props.file, convertToImg)
+
+const { t, tp } = useTranslation()
+const { textColorComputed } = useTextColor(toRef(props, 'color'))
+</script>
+
+<style lang="scss">
 @import "variables";
 @import "../../../styles/resources";
 

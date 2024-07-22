@@ -1,30 +1,21 @@
 <template>
-  <va-avatar
-    src="https://randomuser.me/api/portraits/women/1.jpg"
-    alt="Women"
-    class="mr-4"
-  />
+  <div class="flex flex-wrap items-center gap-4">
+    <VaAvatar
+      src="https://randomuser.me/api/portraits/women/1.jpg"
+      alt="Women"
+    />
 
-  <va-avatar
-    title="icon face"
-    icon="face"
-    class="mr-4"
-  />
+    <VaAvatar title="icon face" icon="face" />
 
-  <va-avatar
-    title="Jane Doe' avatar"
-    class="mr-4"
-  >
-    J.D.
-  </va-avatar>
-
-  <div class="inline-flex justify-start items-center">
-    <va-avatar
-      aria-hidden="true"
-      class="mr-4"
-    >
+    <VaAvatar title="Jane Doe' avatar">
       J.D.
-    </va-avatar>
-    <span>Jane Doe</span>
+    </VaAvatar>
+
+    <div class="inline-flex justify-start items-center shrink-0 gap-4">
+      <VaAvatar aria-hidden="true">
+        J.D.
+      </VaAvatar>
+      <span>Jane Doe</span>
+    </div>
   </div>
 </template>

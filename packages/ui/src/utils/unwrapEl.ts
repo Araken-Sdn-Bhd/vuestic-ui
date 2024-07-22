@@ -1,4 +1,4 @@
-import { Component, ComponentPublicInstance } from 'vue'
+import { Component, ComponentPublicInstance, unref } from 'vue'
 
 /**
  * Used to get the HTMLElement from template refs.
@@ -9,8 +9,12 @@ export const unwrapEl = <T extends HTMLElement | ComponentPublicInstance | Compo
   if (!el) { return }
   if (typeof el !== 'object') { return }
 
+  el = unref(el)
+
+  if (!el) { return }
+
   if (typeof (el as ComponentPublicInstance).$el !== 'undefined') {
-    return (el as ComponentPublicInstance).$el
+    return (el as ComponentPublicInstance).$el as HTMLElement
   }
 
   return el as HTMLElement

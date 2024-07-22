@@ -1,23 +1,24 @@
 <template>
-  <va-pagination
+  <VaPagination
     v-model="value"
     :pages="10"
     :visible-pages="3"
     buttons-preset="primary"
-    class="mb-6"
+    class="mb-6 justify-center sm:justify-start"
   />
-  <va-pagination
+  <VaPagination
     v-model="value"
     :pages="10"
     :visible-pages="3"
     buttons-preset="default"
-    class="mb-6"
+    class="mb-6 justify-center sm:justify-start"
   />
-  <va-pagination
+  <VaPagination
     v-model="value"
     :pages="10"
     :visible-pages="3"
     buttons-preset="secondary"
+    class="justify-center sm:justify-start"
   />
 </template>
 

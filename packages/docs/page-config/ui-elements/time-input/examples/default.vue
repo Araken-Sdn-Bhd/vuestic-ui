@@ -1,5 +1,5 @@
 <template>
-  <va-time-input v-model="value" />
+  <VaTimeInput v-model="value" class="w-28" />
 </template>
 
 <script>

@@ -6,67 +6,74 @@
     :error="computedError"
     :error-messages="computedErrorMessages"
     :error-count="errorCount"
-    :role="roleComputed"
     @blur="onBlur"
-    ref="container"
+    #default="{ ariaAttributes }"
   >
-    <label
-      v-for="(option, index) in computedOptions"
-      :key="index"
-      :class="radioClass(option)"
-      class="va-radio va-radio__square"
+    <div
+      ref="container"
+      class="va-radio"
+      :role="roleComputed"
+      v-bind="ariaAttributes"
     >
-      <input
-        ref="input"
-        class="va-radio__input"
-        type="radio"
-        role="radio"
-        :value="isChecked(option)"
-        :checked="isChecked(option)"
-        :aria-checked="isChecked(option)"
-        v-bind="inputAttributesComputed(option)"
-        @change="selectOption(getValue(option), $event)"
-        @focus="onFocus"
-        @blur="onBlur"
-      />
-
-      <slot name="icon" v-bind="{
-        value: isChecked(option),
-        text: getText(option),
-        disabled: getDisabled(option),
-      }">
-        <span
-          aria-hidden="true"
-          class="va-radio__icon"
-        >
-          <span
-            class="va-radio__icon__background"
-          />
-          <span class="va-radio__icon__dot" />
-        </span>
-      </slot>
-
-      <span
-        v-if="getText(option) || $slots.default"
-        ref="label"
-        class="va-radio__text"
+      <label
+        v-for="(option, index) in computedOptions"
+        :key="index"
+        :class="radioClass(option)"
+        class="va-radio__square"
       >
-         <slot v-bind="{
+        <input
+          ref="input"
+          class="va-radio__input"
+          type="radio"
+          role="radio"
+          :value="isChecked(option)"
+          :checked="isChecked(option)"
+          :aria-checked="isChecked(option)"
+          v-bind="{ ...inputAttributesComputed(option), ...ariaAttributes }"
+          @change="selectOption(getValue(option), $event)"
+          @focus="onFocus"
+          @blur="onBlur"
+        />
+
+        <slot name="icon" v-bind="{
           value: isChecked(option),
           text: getText(option),
           disabled: getDisabled(option),
+          index,
         }">
-          {{ getText(option) }}
+          <span
+            aria-hidden="true"
+            class="va-radio__icon"
+          >
+            <span
+              class="va-radio__icon__background"
+            />
+            <span class="va-radio__icon__dot" />
+          </span>
         </slot>
-      </span>
-    </label>
+
+        <div
+          v-if="getText(option) || $slots.default"
+          ref="label"
+          class="va-radio__text"
+        >
+          <slot v-bind="{
+            value: isChecked(option),
+            text: getText(option),
+            disabled: getDisabled(option),
+            index,
+          }">
+            {{ getText(option) }}
+          </slot>
+        </div>
+      </label>
+    </div>
   </VaMessageListWrapper>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, computed, shallowRef } from 'vue'
+<script lang="ts" setup>
+import { PropType, computed, shallowRef } from 'vue'
 
-import { generateUniqueId } from '../../utils/uuid'
 import {
   useComponentPresetProp,
   useColors,
@@ -77,172 +84,155 @@ import {
   useSelectableList,
   useSelectableListProps,
 } from '../../composables'
-import { VaMessageListWrapper } from '../va-input'
+import { VaMessageListWrapper } from '../va-message-list'
 import type { VaRadioOption } from './types'
+import { useComponentUuid } from '../../composables/useComponentUuid'
 
-export default defineComponent({
+defineOptions({
   name: 'VaRadio',
-  components: { VaMessageListWrapper },
-  emits: useSelectableEmits,
-  props: {
-    ...useSelectableProps,
-    ...useComponentPresetProp,
-    ...useSelectableListProps,
-    modelValue: {
-      type: [Boolean, Array, String, Object, Number] as PropType<
+})
+
+const props = defineProps({
+  ...useSelectableProps,
+  ...useComponentPresetProp,
+  ...useSelectableListProps,
+  modelValue: {
+    type: [Boolean, Array, String, Object, Number] as PropType<
         VaRadioOption['value']
       >,
-      default: null,
-    },
-    options: {
-      type: Array<VaRadioOption>,
-      default: () => [],
-    },
-    name: { type: String, default: '' },
-    label: { type: String, default: undefined },
-    leftLabel: { type: Boolean, default: false },
-    color: { type: String, default: 'primary' },
-    option: {
-      type: [Object, String, Number] as PropType<VaRadioOption>,
-      default: undefined,
-    },
+    default: null,
   },
-  setup (props, { emit }) {
-    const { getColor } = useColors()
-    const elements: Elements = {
-      container: shallowRef<HTMLElement>(),
-      input: shallowRef<HTMLElement>(),
-      label: shallowRef<HTMLElement>(),
-    }
-
-    const {
-      computedError,
-      computedErrorMessages,
-      validationAriaAttributes,
-      onBlur,
-      onFocus,
-    } = useSelectable(props, emit, elements)
-
-    const { getText: originalGetText, getDisabled: originalGetDisabled, getValue } = useSelectableList(props)
-
-    const getText = (option: Parameters<typeof originalGetText>[0]) => {
-      if (props.options.length > 0) { return originalGetText(option) }
-
-      return props.label ?? originalGetText(option)
-    }
-    const getDisabled = (option: Parameters<typeof originalGetDisabled>[0]) => originalGetDisabled(option) || props.disabled
-
-    const isNoOption = computed(() => props.options.length === 0 && !props.option)
-
-    const isChecked = (option: VaRadioOption) => {
-      if (isNoOption.value) {
-        return props.modelValue
-      }
-
-      return props.modelValue === getValue(option)
-    }
-
-    const computedOptions = computed(() => {
-      if (isNoOption.value) {
-        return [{}]
-      }
-
-      if (props.option) {
-        return [props.option]
-      } else {
-        return props.options
-      }
-    })
-
-    const radioClass = (option: VaRadioOption) => ({
-      'va-radio--left-label': props.leftLabel,
-      'va-radio--selected': isChecked(option),
-      'va-radio--readonly': props.readonly,
-      'va-radio--disabled': props.disabled,
-      'va-radio--indeterminate': props.indeterminate,
-      'va-radio--error': computedError.value,
-    })
-
-    const selectOption = (option: any, event?: any) => {
-      if (isNoOption.value) {
-        emit('update:modelValue', event?.target?.checked || false)
-        return
-      }
-
-      emit('update:modelValue', option)
-    }
-
-    const labelStyle = computed(() => {
-      return {
-        color: computedError.value ? getColor('danger') : '',
-      }
-    })
-
-    const inputStyle = computed(() => {
-      const style = {
-        background: getColor(props.color),
-        borderColor: getColor(props.color),
-      }
-
-      if (computedError.value) {
-        style.borderColor = getColor('danger')
-      }
-
-      return style
-    })
-
-    const iconBackgroundComputedStyles = computed(() => ({
-      backgroundColor: getColor(props.color),
-    }))
-
-    const iconDotComputedStyles = computed(() => {
-      return {
-        borderColor: computedError.value ? getColor('danger') : getColor(props.color),
-        backgroundColor: getColor(props.color),
-      }
-    })
-
-    const iconComputedStyles = computed(() => {
-      return { borderColor: computedError.value ? getColor('danger') : getColor(props.color) }
-    })
-
-    const computedName = computed(() => props.name || generateUniqueId())
-    const inputAttributesComputed = (option: any) => {
-      const disabled = getDisabled(option)
-      return {
-        name: computedName.value,
-        disabled: disabled,
-        readonly: props.readonly,
-        tabindex: disabled ? -1 : 0,
-        'aria-disabled': disabled,
-        'aria-readOnly': props.readonly,
-        ...validationAriaAttributes.value,
-      }
-    }
-
-    return {
-      getDisabled,
-      isChecked,
-      computedOptions,
-      radioClass,
-      labelStyle,
-      inputStyle,
-      computedError,
-      computedErrorMessages,
-      iconBackgroundComputedStyles,
-      iconDotComputedStyles,
-      iconComputedStyles,
-      selectOption,
-      onFocus,
-      onBlur,
-      inputAttributesComputed,
-      computedName,
-      roleComputed: computed(() => props.options?.length > 0 ? 'radiogroup' : ''),
-      getText,
-      getValue,
-    }
+  options: {
+    type: Array<VaRadioOption>,
+    default: () => [],
   },
+  name: { type: String, default: '' },
+  label: { type: String, default: undefined },
+  leftLabel: { type: Boolean, default: false },
+  color: { type: String, default: 'primary' },
+  option: {
+    type: [Object, String, Number] as PropType<VaRadioOption>,
+    default: undefined,
+  },
+  vertical: { type: Boolean, default: false },
 })
+
+const emit = defineEmits(useSelectableEmits)
+
+const { getColor } = useColors()
+const elements: Elements = {
+  container: shallowRef<HTMLElement>(),
+  input: shallowRef<HTMLElement>(),
+  label: shallowRef<HTMLElement>(),
+}
+
+const {
+  computedError,
+  computedErrorMessages,
+  validationAriaAttributes,
+  onBlur,
+  onFocus,
+} = useSelectable(props, emit, elements)
+
+const { getText: originalGetText, getDisabled: originalGetDisabled, getValue } = useSelectableList(props)
+
+const getText = (option: Parameters<typeof originalGetText>[0]) => {
+  if (props.options.length > 0) { return originalGetText(option) }
+
+  return props.label ?? originalGetText(option)
+}
+const getDisabled = (option: Parameters<typeof originalGetDisabled>[0]) => originalGetDisabled(option) || props.disabled
+
+const isNoOption = computed(() => props.options.length === 0 && !props.option)
+
+const isChecked = (option: VaRadioOption) => {
+  if (isNoOption.value) {
+    return props.modelValue
+  }
+
+  return props.modelValue === getValue(option)
+}
+
+const computedOptions = computed(() => {
+  if (isNoOption.value) {
+    return [{}]
+  }
+
+  if (props.option) {
+    return [props.option]
+  } else {
+    return props.options
+  }
+})
+
+const radioClass = (option: VaRadioOption) => ({
+  'va-radio--left-label': props.leftLabel,
+  'va-radio--selected': isChecked(option),
+  'va-radio--readonly': props.readonly,
+  'va-radio--disabled': props.disabled,
+  'va-radio--indeterminate': props.indeterminate,
+  'va-radio--error': computedError.value,
+  'va-radio--single-option': isNoOption.value,
+})
+
+const selectOption = (option: any, event?: any) => {
+  if (isNoOption.value) {
+    emit('update:modelValue', event?.target?.checked || false)
+    return
+  }
+
+  emit('update:modelValue', option)
+}
+
+const labelStyle = computed(() => {
+  return {
+    color: computedError.value ? getColor('danger') : '',
+  }
+})
+
+const inputStyle = computed(() => {
+  const style = {
+    background: getColor(props.color),
+    borderColor: getColor(props.color),
+  }
+
+  if (computedError.value) {
+    style.borderColor = getColor('danger')
+  }
+
+  return style
+})
+
+const iconBackgroundComputedStyles = computed(() => ({
+  backgroundColor: getColor(props.color),
+}))
+
+const iconDotComputedStyles = computed(() => {
+  return {
+    borderColor: computedError.value ? getColor('danger') : getColor(props.color),
+    backgroundColor: getColor(props.color),
+  }
+})
+
+const iconComputedStyles = computed(() => {
+  return { borderColor: computedError.value ? getColor('danger') : getColor(props.color) }
+})
+
+const componentId = useComponentUuid()
+const computedName = computed(() => props.name || componentId)
+const inputAttributesComputed = (option: any) => {
+  const disabled = getDisabled(option)
+  return {
+    name: computedName.value,
+    disabled: disabled,
+    readonly: props.readonly,
+    tabindex: disabled ? -1 : 0,
+  }
+}
+
+const flexDirection = computed(() => props.vertical ? 'column' : 'row')
+
+const roleComputed = computed(() => props.options?.length > 0 ? 'radiogroup' : '')
 </script>
 
 <style lang="scss">
@@ -250,15 +240,23 @@ export default defineComponent({
 @import "variables";
 
 .va-radio {
-  display: var(--va-radio-display);
-  align-items: center;
-  cursor: var(--va-radio-cursor);
-  position: var(--va-radio-position);
-  margin-top: var(--va-radio-margin-top);
-  margin-right: var(--va-radio-margin-right);
-  transition: var(--va-radio-transition, var(--va-swing-transition));
-  font-family: var(--va-font-family);
-  color: v-bind("labelStyle.color");
+  display: flex;
+  width: max-content;
+  flex-direction: v-bind(flexDirection);
+  gap: var(--va-radio-gap);
+
+  &__square {
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    cursor: var(--va-radio-cursor);
+    position: var(--va-radio-position);
+    margin-top: var(--va-radio-margin-top);
+    margin-right: var(--va-radio-margin-right);
+    transition: var(--va-radio-transition, var(--va-swing-transition));
+    font-family: var(--va-font-family);
+    color: v-bind("labelStyle.color");
+  }
 
   & + & {
     margin-top: 0.5rem;
@@ -286,6 +284,10 @@ export default defineComponent({
     flex-direction: row-reverse;
     display: inline-flex;
     align-items: center;
+
+    &.va-radio__square {
+      justify-content: space-between;
+    }
   }
 
   &__input {
@@ -300,9 +302,11 @@ export default defineComponent({
     height: var(--va-radio-icon-height);
     border-color: v-bind("iconComputedStyles.borderColor");
     border-radius: var(--va-radio-icon-border-radius);
+    background: var(--va-radio-background);
     position: relative;
     border: var(--va-radio-icon-border);
     box-sizing: border-box;
+    margin: 4px;
 
     .va-radio__input:disabled + & {
       @include va-disabled;
@@ -349,11 +353,11 @@ export default defineComponent({
       opacity: var(--va-radio-background-opacity);
       background-color: v-bind('iconBackgroundComputedStyles.backgroundColor');
 
-      .va-radio:hover & {
+      .va-radio__square:hover & {
         opacity: 0.2;
       }
 
-      .va-radio--disabled:hover & {
+      .va-radio--disabled .va-radio__square:hover & {
         opacity: 0;
       }
     }
@@ -363,6 +367,7 @@ export default defineComponent({
     display: var(--va-radio-text-display);
     margin-left: var(--va-radio-text-margin-left);
     margin-right: var(--va-radio-text-margin-right);
+    white-space: nowrap;
 
     .va-radio--disabled & {
       @include va-disabled;

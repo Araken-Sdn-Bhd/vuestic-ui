@@ -6,6 +6,12 @@ export {
   useIcon as useIcons,
   type ValidationRule,
   useForm,
+  useInputMask,
+  createMaskFromRegex,
+  createNumeralMask,
+  createMaskDate,
+  compareWithMask,
+  useStickyTableHeaders,
 } from './composables'
 
 export * from './services/vue-plugin'
@@ -27,4 +33,5 @@ export { defineVuesticConfig } from './services/global-config/types'
 export type { GlobalConfig, GlobalConfigUpdater, PartialGlobalConfig } from './services/global-config/types'
 export type { ComponentConfig } from './services/component-config'
 export type { IconConfig, IconConfiguration } from './services/icon/types'
-export type { ColorConfig } from './services/color/types'
+export type { ColorConfig, CustomColorVariables } from './services/color/types'
+export type { I18NKey, I18nConfig, CustomI18NKeys } from './services/i18n'

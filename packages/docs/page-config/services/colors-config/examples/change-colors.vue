@@ -1,8 +1,8 @@
 <template>
   <div class="flex items-center gap-4">
-    <va-button>Primary button</va-button>
+    <VaButton>Primary button</VaButton>
 
-    <va-color-palette
+    <VaColorPalette
       v-model="primaryColor"
       :palette="colorsToChange"
       class="mx-6"
@@ -13,6 +13,8 @@
 </template>
 
 <script setup>
+import { useColors } from 'vuestic-ui';
+
 const { getComputedColor } = useColors();
 
 const colorsToChange = [

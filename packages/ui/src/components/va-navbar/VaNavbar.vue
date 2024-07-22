@@ -2,19 +2,22 @@
   <header
     ref="scrollRoot"
     class="va-navbar"
+    :class="bemClasses"
     :style="computedStyle"
   >
-    <div class="va-navbar__left">
-      <slot name="left" />
-    </div>
+    <slot>
+      <div class="va-navbar__left">
+        <slot name="left" />
+      </div>
 
-    <div class="va-navbar__center">
-      <slot />
-    </div>
+      <div class="va-navbar__center">
+        <slot name="center" />
+      </div>
 
-    <div class="va-navbar__right">
-      <slot name="right" />
-    </div>
+      <div class="va-navbar__right">
+        <slot name="right" />
+      </div>
+    </slot>
 
     <div
       v-if="shape"
@@ -24,8 +27,8 @@
   </header>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from 'vue'
+<script lang="ts" setup>
+import { computed } from 'vue'
 
 import {
   useColors,
@@ -34,44 +37,45 @@ import {
   useTextColor,
   useFixedBarProps,
   useComponentPresetProp,
+  useBem,
 } from '../../composables'
 
-export default defineComponent({
+defineOptions({
   name: 'VaNavbar',
-  props: {
-    ...useFixedBarProps,
-    ...useComponentPresetProp,
-    color: { type: String, default: 'background-secondary' },
-    textColor: { type: String },
-    shape: { type: Boolean, default: false },
-  },
-
-  setup (props) {
-    const { scrollRoot, isScrolledDown } = setupScroll(props.fixed)
-    const { fixedBarStyleComputed } = useFixedBar(props, isScrolledDown)
-
-    const { getColor, shiftHSLAColor } = useColors()
-    const { textColorComputed } = useTextColor()
-    const color = computed(() => getColor(props.color))
-
-    const shapeStyleComputed = computed(() => ({
-      borderTopColor: shiftHSLAColor(color.value, { h: -1, s: -11, l: 10 }),
-    }))
-
-    const computedStyle = computed(() => ({
-      ...fixedBarStyleComputed.value,
-      backgroundColor: color.value,
-      color: textColorComputed.value,
-      fill: textColorComputed.value,
-    }))
-
-    return {
-      scrollRoot,
-      computedStyle,
-      shapeStyleComputed,
-    }
-  },
 })
+
+const props = defineProps({
+  ...useFixedBarProps,
+  ...useComponentPresetProp,
+  color: { type: String, default: 'background-secondary' },
+  textColor: { type: String },
+  shape: { type: Boolean, default: false },
+  shadowed: { type: Boolean, default: false },
+  bordered: { type: Boolean, default: false },
+})
+
+const { scrollRoot, isScrolledDown } = setupScroll(props.fixed)
+const { fixedBarStyleComputed } = useFixedBar(props, isScrolledDown)
+
+const { getColor, shiftHSLAColor } = useColors()
+const color = computed(() => getColor(props.color))
+const { textColorComputed } = useTextColor(color)
+
+const shapeStyleComputed = computed(() => ({
+  borderTopColor: shiftHSLAColor(color.value, { h: -1, s: -11, l: 10 }),
+}))
+
+const computedStyle = computed(() => ({
+  ...fixedBarStyleComputed.value,
+  backgroundColor: color.value,
+  color: textColorComputed.value,
+  fill: textColorComputed.value,
+}))
+
+const bemClasses = useBem('va-navbar', () => ({
+  shadowed: props.shadowed,
+  bordered: props.bordered,
+}))
 </script>
 
 <style lang="scss">
@@ -103,11 +107,6 @@ export default defineComponent({
       &:last-child {
         margin-right: 0;
       }
-    }
-
-    @include media-breakpoint-down(sm) {
-      justify-content: center;
-      align-items: center;
     }
   }
 
@@ -142,11 +141,6 @@ export default defineComponent({
         margin-right: 0;
       }
     }
-
-    @include media-breakpoint-down(sm) {
-      justify-content: center;
-      align-items: center;
-    }
   }
 
   &__background-shape {
@@ -165,19 +159,17 @@ export default defineComponent({
   }
 
   @include media-breakpoint-down(sm) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: var(--va-navbar-mobile-height);
-    padding: var(--va-navbar-sm-padding);
-
-    & > * {
-      width: 100%;
-    }
-
     &__background-shape {
       display: none;
     }
+  }
+
+  &--shadowed {
+    box-shadow: 0 2px 8px var(--va-shadow);
+  }
+
+  &--bordered {
+    border-bottom: var(--va-background-border);
   }
 }
 </style>

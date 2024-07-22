@@ -1,52 +1,28 @@
 <template>
-  <div class="max-w-xs">
-    <va-select
-      v-model="value"
-      class="mb-6"
-      label="With label"
-      :options="options"
-    />
-    <va-select
-      v-model="value"
-      class="mb-6"
-      label="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam."
-      placeholder="Long label"
-      :options="options"
-    />
-    <va-select
-      v-model="value"
-      class="mb-6"
-      placeholder="With placeholder"
-      :options="options"
-    />
-    <va-select
-      v-model="value"
-      class="mb-6"
-      label="Long placeholder"
-      placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,"
-      :options="options"
-    />
-    <va-select
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="No options"
       :options="[]"
+      placeholder="Select option"
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="No options with custom text"
       :options="[]"
-      no-options-text="Sorry, nothing to show :("
+      placeholder="Select option"
+      no-options-text="Sorry, nothing to show, except this custom text :)"
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Clearable"
       :options="options"
       clearable
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Clearable and custom clear icon"
@@ -54,35 +30,28 @@
       clearable
       clearable-icon="cancel"
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Hint messages"
       :options="options"
       :messages="['Hint message 1', 'Hint message 2']"
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Hide selected"
       :options="options"
       hide-selected
     />
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
-      label="Custom list placement (top)"
+      label="Custom list placement (left)"
       :options="options"
-      placement="top"
+      placement="left"
     />
-    <va-select
-      v-model="value"
-      class="mb-6"
-      label="Custom list placement (bottom)"
-      :options="options"
-      placement="bottom"
-    />
-    <va-select
+    <VaSelect
       v-model="value"
       label="Custom list height (320px)"
       :options="options"
@@ -107,7 +76,7 @@ export default {
         "eight",
         "nine",
       ],
-      value: "",
+      value: "one",
     };
   },
 };

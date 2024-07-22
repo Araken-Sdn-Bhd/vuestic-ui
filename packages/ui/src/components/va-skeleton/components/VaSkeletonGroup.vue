@@ -6,57 +6,48 @@
   </VaConfig>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, computed, ref, onMounted, onBeforeMount } from 'vue'
-import { useBem } from '../../../composables'
+<script lang="ts" setup>
+import { PropType, computed, ref, onMounted, onBeforeMount, ComputedRef } from 'vue'
+import { useBem, useNumericProp } from '../../../composables'
 import { VaConfig } from '../../va-config'
 
-export default defineComponent({
+defineOptions({
   name: 'VaSkeletonGroup',
-
-  components: {
-    VaConfig,
-  },
-
-  props: {
-    color: { type: String, default: 'backgroundElement' },
-    delay: { type: Number, default: 100 },
-
-    animation: { type: String as PropType<'pulse' | 'wave' | 'none'>, default: 'pulse' },
-
-    lines: { type: Number, default: 1 },
-    lineGap: { type: String, default: '8px' },
-    lastLineWidth: { type: [String], default: '75%' },
-  },
-
-  setup (props) {
-    const doShow = ref(false)
-
-    let timeoutId: ReturnType<typeof setTimeout>
-
-    onMounted(() => {
-      // We can sync this way animations, wait until all blocks are rendered
-      // This can be done with provide/inject to sync all animations, but for now we don't need it
-      timeoutId = setTimeout(() => {
-        doShow.value = true
-      }, props.delay)
-    })
-
-    onBeforeMount(() => {
-      clearTimeout(timeoutId)
-    })
-
-    const bem = useBem('va-skeleton-group', () => ({
-      hidden: doShow.value === false,
-    }))
-
-    return {
-      doShow,
-      bem,
-      config: computed(() => ({ ...props, delay: 0 })),
-    }
-  },
 })
+
+const props = defineProps({
+  color: { type: String, default: 'backgroundElement' },
+  delay: { type: [Number, String], default: 100 },
+
+  animation: { type: String as PropType<'pulse' | 'wave' | 'none'>, default: 'pulse' },
+
+  lines: { type: [Number, String], default: 1 },
+  lineGap: { type: String, default: '8px' },
+  lastLineWidth: { type: [String], default: '75%' },
+})
+
+const doShow = ref(false)
+const delayComputed = useNumericProp('delay') as ComputedRef<number>
+
+let timeoutId: ReturnType<typeof setTimeout>
+
+onMounted(() => {
+  // We can sync this way animations, wait until all blocks are rendered
+  // This can be done with provide/inject to sync all animations, but for now we don't need it
+  timeoutId = setTimeout(() => {
+    doShow.value = true
+  }, delayComputed.value)
+})
+
+onBeforeMount(() => {
+  clearTimeout(timeoutId)
+})
+
+const bem = useBem('va-skeleton-group', () => ({
+  hidden: doShow.value === false,
+}))
+
+const config = computed(() => ({ ...props, delay: 0 }))
 </script>
 
 <style lang="scss" scoped>

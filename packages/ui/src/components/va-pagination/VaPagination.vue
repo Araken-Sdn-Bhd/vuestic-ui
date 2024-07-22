@@ -93,9 +93,8 @@
   </nav>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
 import {
-  defineComponent,
   PropType,
   ref,
   toRefs,
@@ -103,10 +102,8 @@ import {
   computed,
   watch,
   nextTick,
-  WritableComputedRef,
+  ComputedRef,
 } from 'vue'
-import clamp from 'lodash/clamp.js'
-import pick from 'lodash/pick.js'
 
 import { isDev } from '../../utils/env'
 import {
@@ -115,239 +112,236 @@ import {
   useColors,
   useStateful, useStatefulProps, useStatefulEmits,
   useArrayRefs,
-  useTranslation,
+  useTranslation, useTranslationProp, useNumericProp,
 } from '../../composables'
 import { setPaginationRange } from './setPaginationRange'
 
 import { VaButton } from '../va-button'
+import { ExtractComponentPropTypes } from '../../utils/component-options'
+import { pick } from '../../utils/pick'
+import { clamp } from '../../utils/clamp'
 
-export default defineComponent({
+defineOptions({
   name: 'VaPagination',
-  components: { VaButton },
-  emits: [...useStatefulEmits],
-  props: {
-    ...useStatefulProps,
-    ...useComponentPresetProp,
-    modelValue: { type: Number, default: 1 },
-    visiblePages: { type: Number, default: 0 },
-    pages: { type: Number, default: 0 },
-    disabled: { type: Boolean, default: false },
-    color: { type: String, default: 'primary' },
-    size: {
-      type: String as PropType<'small' | 'medium' | 'large'>,
-      default: 'medium',
-      validator: (v: string) => ['small', 'medium', 'large'].includes(v),
-    },
-    boundaryLinks: { type: Boolean, default: true },
-    boundaryNumbers: { type: Boolean, default: false },
-    directionLinks: { type: Boolean, default: true },
-    input: { type: Boolean, default: false },
-    hideOnSinglePage: { type: Boolean, default: false },
-    total: { type: Number, default: null },
-    pageSize: { type: Number, default: null },
-    boundaryIconLeft: { type: String, default: 'va-arrow-first' },
-    boundaryIconRight: { type: String, default: 'va-arrow-last' },
-    directionIconLeft: { type: String, default: 'va-arrow-left' },
-    directionIconRight: { type: String, default: 'va-arrow-right' },
-    gapped: { type: Boolean, default: false },
-    borderColor: { type: String, default: '' },
-    rounded: { type: Boolean, default: false },
-    activePageColor: { type: String, default: '' },
-    buttonsPreset: { type: String, default: 'primary' },
+})
 
-    ariaLabel: { type: String, default: '$t:pagination' },
-    ariaGoToTheFirstPageLabel: { type: String, default: '$t:goToTheFirstPage' },
-    ariaGoToPreviousPageLabel: { type: String, default: '$t:goToPreviousPage' },
-    ariaGoToSpecificPageLabel: { type: String, default: '$t:goToSpecificPage' },
-    ariaGoToSpecificPageInputLabel: { type: String, default: '$t:goToSpecificPageInput' },
-    ariaGoToNextPageLabel: { type: String, default: '$t:goNextPage' },
-    ariaGoToLastPageLabel: { type: String, default: '$t:goLastPage' },
+type VaButtonProps = ExtractComponentPropTypes<typeof VaButton>
+
+const props = defineProps({
+  ...useStatefulProps,
+  ...useComponentPresetProp,
+  modelValue: { type: Number, default: 1 },
+  visiblePages: { type: [Number, String], default: 0 },
+  pages: { type: [Number, String], default: 0 },
+  disabled: { type: Boolean, default: false },
+  color: { type: String, default: 'primary' },
+  size: {
+    type: String as PropType<'small' | 'medium' | 'large'>,
+    default: 'medium',
+    validator: (v: string) => ['small', 'medium', 'large'].includes(v),
   },
+  boundaryLinks: { type: Boolean, default: true },
+  boundaryNumbers: { type: Boolean, default: false },
+  directionLinks: { type: Boolean, default: true },
+  input: { type: Boolean, default: false },
+  hideOnSinglePage: { type: Boolean, default: false },
+  total: { type: [Number, String], default: null },
+  pageSize: { type: [Number, String], default: null },
+  boundaryIconLeft: { type: String, default: 'va-arrow-first' },
+  boundaryIconRight: { type: String, default: 'va-arrow-last' },
+  directionIconLeft: { type: String, default: 'va-arrow-left' },
+  directionIconRight: { type: String, default: 'va-arrow-right' },
+  gapped: { type: Boolean, default: false },
+  borderColor: { type: String, default: '' },
+  rounded: { type: Boolean, default: false },
+  /** @deprecated Use activeButtonProps="{ color: 'myColor' }" */
+  activePageColor: { type: String, default: '' },
+  activeButtonProps: { type: Object as PropType<VaButtonProps>, default: () => ({}) },
+  buttonProps: { type: Object as PropType<VaButtonProps>, default: () => ({}) },
+  buttonsPreset: { type: String, default: 'primary' },
 
-  setup (props, { emit }) {
-    const htmlInput = shallowRef<HTMLInputElement>()
+  ariaLabel: useTranslationProp('$t:pagination'),
+  ariaGoToTheFirstPageLabel: useTranslationProp('$t:goToTheFirstPage'),
+  ariaGoToPreviousPageLabel: useTranslationProp('$t:goToPreviousPage'),
+  ariaGoToSpecificPageLabel: useTranslationProp('$t:goToSpecificPage'),
+  ariaGoToSpecificPageInputLabel: useTranslationProp('$t:goToSpecificPageInput'),
+  ariaGoToNextPageLabel: useTranslationProp('$t:goNextPage'),
+  ariaGoToLastPageLabel: useTranslationProp('$t:goLastPage'),
+})
 
-    const inputValue = ref('')
+const emit = defineEmits([...useStatefulEmits])
 
-    const usesTotal = computed(() => !!((props.total || props.total === 0) && props.pageSize))
+const htmlInput = shallowRef<HTMLInputElement>()
 
-    const { valueComputed }: { valueComputed: WritableComputedRef<number> } = useStateful(props, emit)
+const inputValue = ref('')
 
-    const currentValue = computed({
-      get: () => usesTotal.value ? Math.ceil(valueComputed.value / props.pageSize) || 1 : valueComputed.value,
-      set: (value) => { valueComputed.value = value },
-    })
+const usesTotal = computed(() => !!((totalComputed.value || totalComputed.value === 0) && pageSizeComputed.value))
 
-    const paginationRange = computed(() => {
-      const { visiblePages, total, pageSize, boundaryNumbers, pages } = props
+const { valueComputed } = useStateful(props, emit)
 
-      const value = currentValue.value || 1
-      const totalPages = usesTotal.value ? Math.ceil(total / pageSize) : pages
+const currentValue = computed({
+  get: () => usesTotal.value ? Math.ceil(valueComputed.value / pageSizeComputed.value!) || 1 : valueComputed.value,
+  set: (value) => { valueComputed.value = value },
+})
 
-      return setPaginationRange(value, visiblePages, totalPages, boundaryNumbers)
-    })
+const visiblePagesComputed = useNumericProp('visiblePages') as ComputedRef<number>
+const pagesComputed = useNumericProp('pages') as ComputedRef<number>
+const totalComputed = useNumericProp('total')
+const pageSizeComputed = useNumericProp('pageSize')
 
-    const lastPage = computed(() => usesTotal.value ? Math.ceil(props.total / props.pageSize) || 1 : +props.pages)
+const paginationRange = computed(() => {
+  const { boundaryNumbers } = props
 
-    const isLastPageNotVisible = computed(() => ((!!props.visiblePages && lastPage.value > props.visiblePages)) || props.input)
+  const value = currentValue.value || 1
+  const totalPages = usesTotal.value ? Math.ceil(totalComputed.value! / pageSizeComputed.value!) : pagesComputed.value
 
-    const showBoundaryLinks = computed(() => {
-      const { boundaryLinks, boundaryNumbers } = props
+  return setPaginationRange(value, visiblePagesComputed.value, totalPages, boundaryNumbers)
+})
 
-      return isLastPageNotVisible.value && boundaryLinks && !boundaryNumbers
-    })
+const lastPage = computed(() => usesTotal.value ? Math.ceil(totalComputed.value! / pageSizeComputed.value!) || 1 : +pagesComputed.value)
 
-    const showDirectionLinks = computed(() => isLastPageNotVisible.value && props.directionLinks)
+const isLastPageNotVisible = computed(() => ((!!visiblePagesComputed.value && lastPage.value > visiblePagesComputed.value)) || props.input)
 
-    const showPagination = computed(() => lastPage.value > 1 || (!props.hideOnSinglePage && lastPage.value <= 1))
+const showBoundaryLinks = computed(() => {
+  const { boundaryLinks, boundaryNumbers } = props
 
-    const focusInput = () => {
-      inputValue.value = String(currentValue.value)
+  return isLastPageNotVisible.value && boundaryLinks && !boundaryNumbers
+})
 
-      nextTick(() => htmlInput.value?.setSelectionRange(0, htmlInput.value.value.length))
-    }
+const showDirectionLinks = computed(() => isLastPageNotVisible.value && props.directionLinks)
 
-    const { setItemRefByIndex, itemRefs } = useArrayRefs()
-    const onUserInput = (pageNum: number | '...') => {
-      if (pageNum === '...' || pageNum === currentValue.value) { return }
+const showPagination = computed(() => lastPage.value > 1 || (!props.hideOnSinglePage && lastPage.value <= 1))
 
-      const limitedPageNum = clamp(pageNum, 1, lastPage.value)
-      currentValue.value = usesTotal.value
-        ? (limitedPageNum - 1) * props.pageSize + 1
-        : limitedPageNum
+const focusInput = () => {
+  inputValue.value = String(currentValue.value)
 
-      itemRefs.value[pageNum - 1]?.focus()
-    }
+  nextTick(() => htmlInput.value?.setSelectionRange(0, htmlInput.value.value.length))
+}
 
-    const resetInput = () => {
-      inputValue.value = ''
-      htmlInput.value?.blur()
-    }
+const { setItemRefByIndex, itemRefs } = useArrayRefs()
+const onUserInput = (pageNum: number | '...') => {
+  if (pageNum === '...' || pageNum === currentValue.value) { return }
 
-    const changeValue = () => {
-      if (+inputValue.value === currentValue.value) {
-        resetInput()
-      }
+  const limitedPageNum = clamp(pageNum, 1, lastPage.value)
+  currentValue.value = usesTotal.value
+    ? (limitedPageNum - 1) * pageSizeComputed.value! + 1
+    : limitedPageNum
 
-      if (!inputValue.value.length) { return }
+  itemRefs.value[pageNum - 1]?.focus()
+}
 
-      let pageNum = Number.parseInt(inputValue.value)
+const resetInput = () => {
+  inputValue.value = ''
+  htmlInput.value?.blur()
+}
 
-      switch (true) {
-        case pageNum < 1:
-          pageNum = 1; break
-        case pageNum > lastPage.value:
-          pageNum = lastPage.value; break
-        case isNaN(pageNum):
-          pageNum = currentValue.value; break
-        default: break
-      }
+const changeValue = () => {
+  if (+inputValue.value === currentValue.value) {
+    resetInput()
+  }
 
-      onUserInput(pageNum)
-      resetInput()
-    }
+  if (!inputValue.value.length) { return }
 
-    const { getColor, colorToRgba } = useColors()
+  let pageNum = Number.parseInt(inputValue.value)
 
-    const inputBorderColorComputed = computed(() => {
-      const { color, buttonsPreset } = toRefs(props)
+  switch (true) {
+    case pageNum < 1:
+      pageNum = 1; break
+    case pageNum > lastPage.value:
+      pageNum = lastPage.value; break
+    case isNaN(pageNum):
+      pageNum = currentValue.value; break
+    default: break
+  }
 
-      if (!color.value) { return 'transparent' }
+  onUserInput(pageNum)
+  resetInput()
+}
 
-      switch (buttonsPreset.value) {
-        case 'default':
-          return getColor(color.value)
-        case undefined:
-        case 'primary':
-          return colorToRgba(getColor(color.value), 0.1)
-        default:
-          return 'transparent'
-      }
-    })
+const { getColor, colorToRgba } = useColors()
 
-    const inputStyleComputed = computed(() => ({
-      cursor: 'default',
-      color: getColor(props.color),
-      opacity: props.disabled ? 0.4 : 1,
-      borderColor: inputBorderColorComputed.value,
-    }))
+const inputBorderColorComputed = computed(() => {
+  const { color, buttonsPreset } = toRefs(props)
 
-    watch([usesTotal, () => props.pages], () => {
-      if (isDev && usesTotal.value && props.pages) {
-        throw new Error('Please, use either `total` and `page-size` props, or `pages`.')
-      }
-    })
+  if (!color.value) { return 'transparent' }
 
-    const inputAttributesComputed = computed(() => ({
-      disabled: props.disabled,
-      placeholder: `${currentValue.value}/${lastPage.value}`,
-    }))
+  switch (buttonsPreset.value) {
+    case 'default':
+      return getColor(color.value)
+    case undefined:
+    case 'primary':
+      return colorToRgba(getColor(color.value), 0.1)
+    default:
+      return 'transparent'
+  }
+})
 
-    const buttonPropsComputed = computed(() => ({
-      size: props.size,
-      preset: props.buttonsPreset,
-      color: props.color,
-      borderColor: props.borderColor,
-      round: props.rounded,
-    }))
+const inputStyleComputed = computed(() => ({
+  cursor: 'default',
+  color: getColor(props.color),
+  opacity: props.disabled ? 0.4 : 1,
+  borderColor: inputBorderColorComputed.value,
+}))
 
-    const currentPageButtonProps = computed(() => ({
-      preset: props.buttonsPreset === 'default' ? 'primary' : 'default',
-      color: props.activePageColor || props.color,
-    }))
+watch([usesTotal, () => pagesComputed.value], () => {
+  if (isDev && usesTotal.value && pagesComputed.value) {
+    throw new Error('Please, use either `total` and `page-size` props, or `pages`.')
+  }
+})
 
-    const getPageButtonProps = (n: number | '...') => {
-      if (!isNaN(+n) && n === currentValue.value) {
-        return Object.assign({}, buttonPropsComputed.value, currentPageButtonProps.value)
-      }
+const inputAttributesComputed = computed(() => ({
+  disabled: props.disabled,
+  placeholder: `${currentValue.value}/${lastPage.value}`,
+}))
 
-      return buttonPropsComputed.value
-    }
+const buttonPropsComputed = computed(() => ({
+  size: props.size,
+  preset: props.buttonsPreset,
+  color: props.color,
+  borderColor: props.borderColor,
+  round: props.rounded,
+  ...props.buttonProps,
+}))
 
-    const isStandAloneInput = computed(() => props.input && !props.boundaryLinks && !props.directionLinks)
-    const inputClassComputed = useBem('va-pagination__input', () => ({
-      sm: props.size === 'small' && isStandAloneInput.value,
-      md: props.size === 'medium' && isStandAloneInput.value,
-      lg: props.size === 'large' && isStandAloneInput.value,
-      auto: !isStandAloneInput.value,
-    }))
+const currentPageButtonProps = computed(() => ({
+  preset: props.buttonsPreset === 'default' ? 'primary' : 'default',
+  color: props.activePageColor || props.color,
+  ...props.activeButtonProps,
+}))
 
-    const classComputed = useBem('va-pagination', () => ({
-      ...pick(props, ['gapped', 'rounded', 'disabled']),
-      bordered: !!props.borderColor,
-    }))
+const getPageButtonProps = (n: number | '...') => {
+  if (!isNaN(+n) && n === currentValue.value) {
+    return Object.assign({}, buttonPropsComputed.value, currentPageButtonProps.value)
+  }
 
-    const goNextPage = () => onUserInput(currentValue.value + 1)
-    const goPrevPage = () => onUserInput(currentValue.value - 1)
+  return buttonPropsComputed.value
+}
 
-    return {
-      ...useTranslation(),
-      getPageButtonProps,
-      inputClassComputed,
-      classComputed,
-      currentValue,
-      lastPage,
-      changeValue,
-      inputValue,
-      showPagination,
-      showBoundaryLinks,
-      onUserInput,
-      showDirectionLinks,
-      paginationRange,
-      focusInput,
-      inputStyleComputed,
-      inputAttributesComputed,
-      goNextPage,
-      goPrevPage,
-      buttonPropsComputed,
-      htmlInput,
-      setItemRefByIndex,
-    }
-  },
+const isStandAloneInput = computed(() => props.input && !props.boundaryLinks && !props.directionLinks)
+const inputClassComputed = useBem('va-pagination__input', () => ({
+  sm: props.size === 'small' && isStandAloneInput.value,
+  md: props.size === 'medium' && isStandAloneInput.value,
+  lg: props.size === 'large' && isStandAloneInput.value,
+  auto: !isStandAloneInput.value,
+}))
+
+const classComputed = useBem('va-pagination', () => ({
+  ...pick(props, ['gapped', 'rounded', 'disabled']),
+  bordered: !!props.borderColor,
+}))
+
+const goNextPage = () => onUserInput(currentValue.value + 1)
+const goPrevPage = () => onUserInput(currentValue.value - 1)
+
+const { tp } = useTranslation()
+
+defineExpose({
+  goNextPage,
+  goPrevPage,
 })
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 @import "../../styles/resources";
 @import "variables";
 

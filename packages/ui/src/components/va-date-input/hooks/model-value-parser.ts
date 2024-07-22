@@ -1,10 +1,11 @@
-import isNil from 'lodash/isNil'
-
 import { DatePickerModelValue } from '../../va-date-picker/types'
 import { defaultParseDateFunction } from './input-text-parser'
 import { DateInputRange, DateInputModelValue, DateInputDate } from '../types'
+import { isNil, isNilValue } from '../../../utils/isNilValue'
 
 export const isRange = (date: DateInputModelValue): date is DateInputRange<DateInputDate> => {
+  if (date === null) { return false }
+
   return typeof date === 'object' && ('start' in date || 'end' in date)
 }
 

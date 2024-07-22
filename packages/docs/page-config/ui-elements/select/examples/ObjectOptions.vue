@@ -1,29 +1,32 @@
 <template>
-  <div class="max-w-xs">
-    <va-select
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Default"
       :options="options"
+      track-by="value"
     />
 
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Text by"
       :options="options"
       text-by="textBy"
+      track-by="value"
     />
 
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Text by (function)"
       :options="options"
       :text-by="(option) => option.textBy"
+      track-by="value"
     />
 
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="value by"
@@ -31,21 +34,20 @@
       value-by="valueBy"
     />
 
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="value by (function)"
       :options="options"
       :value-by="(option) => option.valueBy"
     />
-
-    <va-alert color="info">
-      <template #title>
-        Value
-      </template>
-      {{ value }}
-    </va-alert>
   </div>
+  <VaAlert color="info">
+    <template #title>
+      Value
+    </template>
+    {{ value }}
+  </VaAlert>
 </template>
 
 <script>

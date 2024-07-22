@@ -3,7 +3,6 @@
     <va-date-picker-header
       v-bind="headerProps"
       v-model:view="syncView"
-      :textColor="textColorComputed"
     >
       <template v-for="(_, name) in $slots" :key="name" v-slot:[name]="bind">
         <slot :name="name" v-bind="bind" />
@@ -63,158 +62,144 @@
 </template>
 
 <script lang="ts">
-import { useElementBackground } from '../../composables/useElementBackground'
-import { useTextColor } from '../../composables/useTextColor'
-import { computed, defineComponent, nextTick, PropType, ref, watch } from 'vue'
+import { VaButton } from '../'
+import { computed, nextTick, PropType, ref, watch } from 'vue'
 
 import { filterComponentProps, extractComponentProps, extractComponentEmits } from '../../utils/component-options'
 import { useColors, useStateful, useStatefulProps, useStatefulEmits } from '../../composables'
 import { useView } from './hooks/view'
 import { useComponentPresetProp } from '../../composables/useComponentPreset'
 
-import { DatePickerModelValue, DatePickerType, DatePickerView } from './types'
+import { DatePickerModelValue, DatePickerType, DatePickerViewProp } from './types'
 
 import VaDayPicker from './components/VaDayPicker/VaDayPicker.vue'
 import VaDatePickerHeader from './components/VaDatePickerHeader/VaDatePickerHeader.vue'
 import VaMonthPicker from './components/VaMonthPicker/VaMonthPicker.vue'
 import VaYearPicker from './components/VaYearPicker/VaYearPicker.vue'
 
+import { defineChildProps, useChildComponents } from '../../composables/useChildComponents'
+
 const DEFAULT_MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DEFAULT_WEEKDAY_NAMES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']
+</script>
 
-export default defineComponent({
+<script lang="ts" setup>
+defineOptions({
   name: 'VaDatePicker',
+})
 
-  components: { VaDayPicker, VaDatePickerHeader, VaMonthPicker, VaYearPicker },
-
-  props: {
-    ...useStatefulProps,
-    ...useComponentPresetProp,
-    ...extractComponentProps(VaDatePickerHeader),
-    ...extractComponentProps(VaDayPicker),
-    ...extractComponentProps(VaMonthPicker),
-    ...extractComponentProps(VaYearPicker),
-    modelValue: { type: [Date, Array, Object] as PropType<DatePickerModelValue> },
-    monthNames: { type: Array as PropType<string[]>, default: DEFAULT_MONTH_NAMES },
-    weekdayNames: { type: Array as PropType<string[]>, default: DEFAULT_WEEKDAY_NAMES },
-    view: { type: Object as PropType<DatePickerView> },
-    type: { type: String as PropType<DatePickerType>, default: 'day' },
-    readonly: { type: Boolean, default: false },
-    disabled: { type: Boolean, default: false },
+const props = defineProps({
+  ...defineChildProps({
+    prevButton: VaButton,
+    nextButton: VaButton,
+    middleButton: VaButton,
+  }),
+  ...useStatefulProps,
+  ...useComponentPresetProp,
+  ...extractComponentProps(VaDatePickerHeader),
+  ...extractComponentProps(VaDayPicker),
+  ...extractComponentProps(VaMonthPicker),
+  ...extractComponentProps(VaYearPicker),
+  modelValue: { type: [Date, Array, Object] as PropType<DatePickerModelValue> },
+  monthNames: { type: Array as PropType<string[]>, default: DEFAULT_MONTH_NAMES },
+  weekdayNames: { type: Array as PropType<string[]>, default: DEFAULT_WEEKDAY_NAMES },
+  view: { type: Object as PropType<DatePickerViewProp> },
+  type: { type: String as PropType<DatePickerType>, default: 'day' },
+  readonly: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
 
     // Colors
-    color: { type: String, default: undefined },
-    weekendsColor: { type: String, default: undefined },
-  },
+  color: { type: String, default: undefined },
+  weekendsColor: { type: String, default: undefined },
+})
 
-  emits: [
-    ...useStatefulEmits,
-    ...extractComponentEmits(VaDatePickerHeader),
-    ...extractComponentEmits(VaYearPicker),
-    ...extractComponentEmits(VaDayPicker),
-    ...extractComponentEmits(VaMonthPicker),
-  ],
+useChildComponents(props)
 
-  setup (props, { emit }) {
-    const currentPicker = ref<typeof VaDayPicker | typeof VaMonthPicker | typeof VaYearPicker>()
+const emit = defineEmits([
+  ...useStatefulEmits,
+  ...extractComponentEmits(VaDatePickerHeader),
+  ...extractComponentEmits(VaYearPicker),
+  ...extractComponentEmits(VaDayPicker),
+  ...extractComponentEmits(VaMonthPicker),
+])
 
-    const { valueComputed } = useStateful(props, emit)
+const currentPicker = ref<typeof VaDayPicker | typeof VaMonthPicker | typeof VaYearPicker>()
 
-    const { syncView } = useView(props, emit, { type: props.type })
+const { valueComputed } = useStateful(props, emit)
 
-    const classComputed = computed(() => ({
-      'va-date-picker_without-week-days': props.hideWeekDays,
-      'va-date-picker_disabled': props.disabled,
-    }))
+const { syncView } = useView(props, emit, { type: props.type })
 
-    const onDayModelValueUpdate = (modelValue: DatePickerModelValue) => {
-      if (props.readonly) { return }
+const classComputed = computed(() => ({
+  'va-date-picker_without-week-days': props.hideWeekDays,
+  'va-date-picker_disabled': props.disabled,
+}))
 
-      // Do not update model value if we just want to change view (We can change it for now, but later we can add here timepicker)
-      if (props.type === 'day') { valueComputed.value = modelValue }
-    }
+const onDayModelValueUpdate = (modelValue: DatePickerModelValue) => {
+  if (props.readonly) { return }
 
-    const onMonthClick = (date: Date) => {
-      emit('click:month', date)
-      const year = date.getFullYear()
-      const month = date.getMonth()
-      if (props.type !== 'month') {
-        syncView.value = { type: 'day', year, month }
-      }
-    }
+  // Do not update model value if we just want to change view (We can change it for now, but later we can add here timepicker)
+  if (props.type === 'day') { valueComputed.value = modelValue }
+}
 
-    const onMonthModelValueUpdate = (modelValue: DatePickerModelValue) => {
-      // Do not update model value if we just want to change view
-      if (props.type === 'month') { valueComputed.value = modelValue }
-    }
+const onMonthClick = (date: Date) => {
+  emit('click:month', date)
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  if (props.type !== 'month') {
+    syncView.value = { type: 'day', year, month }
+  }
+}
 
-    const onYearClick = (date : Date) => {
-      emit('click:year', date)
+const onMonthModelValueUpdate = (modelValue: DatePickerModelValue) => {
+  // Do not update model value if we just want to change view
+  if (props.type === 'month') { valueComputed.value = modelValue }
+}
 
-      const year = date.getFullYear()
+const onYearClick = (date : Date) => {
+  emit('click:year', date)
 
-      if (props.type !== 'year') {
-        syncView.value = { type: 'month', year, month: syncView.value.month }
-      }
-    }
+  const year = date.getFullYear()
 
-    const onYearModelValueUpdate = (modelValue: DatePickerModelValue) => {
-      // Do not update model value if we just want to change view
-      if (props.type === 'year') { valueComputed.value = modelValue }
-    }
+  if (props.type !== 'year') {
+    syncView.value = { type: 'month', year, month: syncView.value.month }
+  }
+}
 
-    const { colorsToCSSVariable } = useColors()
-    const { background } = useElementBackground()
-    const { textColorComputed } = useTextColor(background)
+const onYearModelValueUpdate = (modelValue: DatePickerModelValue) => {
+  // Do not update model value if we just want to change view
+  if (props.type === 'year') { valueComputed.value = modelValue }
+}
 
-    const styleComputed = computed(() => ({
-      color: textColorComputed.value,
-      ...colorsToCSSVariable({
-        color: props.color,
-        'weekends-color': props.weekendsColor,
-      }, 'va-date-picker'),
-    }))
+const { colorsToCSSVariable } = useColors()
 
-    const focusCurrentPicker = () => currentPicker.value?.$el.focus()
+const styleComputed = computed(() => ({
+  ...colorsToCSSVariable({
+    color: props.color,
+    'weekends-color': props.weekendsColor,
+  }, 'va-date-picker'),
+}))
 
-    watch(syncView, (newValue, prevValue) => {
-      // Don't focus new picker if user does not change type
-      if (newValue.type === prevValue.type) { return }
+const focusCurrentPicker = () => currentPicker.value?.$el.focus()
 
-      nextTick(focusCurrentPicker)
-    })
+watch(syncView, (newValue, prevValue) => {
+  // Don't focus new picker if user does not change type
+  if (newValue.type === prevValue.type) { return }
 
-    const isPickerReadonly = (pickerName: 'year' | 'month' | 'day') => {
-      return props.readonly && props.type === pickerName
-    }
+  nextTick(focusCurrentPicker)
+})
 
-    return {
-      dayPickerProps: filterComponentProps(extractComponentProps(VaDayPicker)),
-      headerProps: filterComponentProps(extractComponentProps(VaDatePickerHeader)),
-      monthPickerProps: filterComponentProps(extractComponentProps(VaMonthPicker)),
-      yearPickerProps: filterComponentProps(extractComponentProps(VaYearPicker)),
+const isPickerReadonly = (pickerName: 'year' | 'month' | 'day') => {
+  return props.readonly && props.type === pickerName
+}
 
-      syncView,
+const dayPickerProps = filterComponentProps(extractComponentProps(VaDayPicker))
+const headerProps = filterComponentProps(extractComponentProps(VaDatePickerHeader))
+const monthPickerProps = filterComponentProps(extractComponentProps(VaMonthPicker))
+const yearPickerProps = filterComponentProps(extractComponentProps(VaYearPicker))
 
-      classComputed,
-      valueComputed,
-
-      onDayModelValueUpdate,
-
-      onMonthClick,
-      onMonthModelValueUpdate,
-
-      onYearClick,
-      onYearModelValueUpdate,
-
-      styleComputed,
-      currentPicker,
-      textColorComputed,
-      focusCurrentPicker,
-
-      isPickerReadonly,
-    }
-  },
+defineExpose({
+  focus: focusCurrentPicker,
+  focusCurrentPicker,
 })
 </script>
 
@@ -230,6 +215,7 @@ export default defineComponent({
   font-weight: var(--va-date-picker-font-weight);
   font-size: var(--va-date-picker-font-size);
   line-height: var(--va-date-picker-line-height);
+  color: currentColor;
 
   &__picker-wrapper {
     height: var(--va-date-picker-content-height);

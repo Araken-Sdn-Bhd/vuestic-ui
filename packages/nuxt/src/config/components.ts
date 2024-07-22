@@ -43,6 +43,7 @@ export default [
   'VaInfiniteScroll',
   'VaInnerLoading',
   'VaInput',
+  'VaLayout',
   'VaList',
   'VaListItem',
   'VaListItemLabel',
@@ -83,5 +84,12 @@ export default [
   'VaScrollContainer',
   'VaValue',
   'VaVirtualScroller',
-  'VaStepper'
+  'VaStepper',
+  'VaTextarea',
+  'VaMenu',
+  'VaMenuList',
+  'VaMenuItem',
+  'VaMenuGroup',
+  'VaFormField',
+  'VaStickyScrollbar'
 ]

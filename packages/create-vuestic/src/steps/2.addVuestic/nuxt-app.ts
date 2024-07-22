@@ -4,11 +4,12 @@ import { readFile, writeFile } from "fs/promises"
 import { usePackageJson } from "../../composables/usePackageJson"
 import { resolvePath } from "../../utils/resolve-path"
 import { insertNuxtModule } from './insert-nuxt-module';
+import { restructureProject } from './nuxt-restructure-project';
 
 export const addVuesticToNuxtApp = async () => {
   // Install vuestic-ui
   const { addDevDependency } = await usePackageJson()
-  addDevDependency('@vuestic/nuxt', versions['@vuestic/nuxt'])
+  await addDevDependency('@vuestic/nuxt', versions['@vuestic/nuxt'])
 
   const { projectName, treeShaking } = await useUserAnswers()
 
@@ -24,4 +25,6 @@ export const addVuesticToNuxtApp = async () => {
   let nuxtConfigSource = await readFile(nuxtConfigPath, 'utf-8')
   nuxtConfigSource = insertNuxtModule(nuxtConfigSource, css)
   await writeFile(nuxtConfigPath, nuxtConfigSource)
+
+  await restructureProject()
 }

@@ -1,57 +1,54 @@
 <template>
-  <div class="max-w-xs">
-    <va-select
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+    <VaSelect
       v-model="value"
-      class="mb-6"
       label="Content slot"
       :options="options"
       multiple
     >
-      <template #content="{ valueString }">
-        {{ valueString }}
+      <template #content="{ value }">
+        <VaChip v-for="v in value" :key="v" class="mr-2" size="small">
+          {{ v }}
+        </VaChip>
       </template>
-    </va-select>
-    <va-select
+    </VaSelect>
+    <VaSelect
       v-model="value"
-      class="mb-6"
       label="Prepend slot"
       :options="options"
     >
       <template #prepend>
-        <va-icon name="share" />
+        <VaIcon name="person" class="mr-2" />
       </template>
-    </va-select>
-    <va-select
+    </VaSelect>
+    <VaSelect
       v-model="value"
-      class="mb-6"
       label="Prepend inner slot"
       :options="options"
     >
       <template #prependInner>
-        <va-icon name="share" />
+        <VaIcon name="person" />
       </template>
-    </va-select>
-    <va-select
+    </VaSelect>
+    <VaSelect
       v-model="value"
-      class="mb-6"
       label="Append inner slot"
       :options="options"
     >
       <template #appendInner>
-        <va-icon name="share" />
+        <VaIcon name="person" />
       </template>
-    </va-select>
-    <va-select
+    </VaSelect>
+    <VaSelect
       v-model="value"
-      class="mb-6"
       label="Append slot"
       :options="options"
     >
       <template #append>
-        <va-icon name="share" />
+        <VaIcon name="person" class="ml-2" />
       </template>
-    </va-select>
-    <va-select
+    </VaSelect>
+    <VaSelect
       v-model="value"
       label="Option slot"
       :options="options"
@@ -59,16 +56,16 @@
       <template #option="{ option, index, selectOption }">
         <div class="flex justify-between items-center p-2">
           Have a nice day!
-          <va-button
+          <VaButton
             class="mb-2"
             size="small"
             @click="selectOption(option)"
           >
             {{ option }} ({{ index + 1 }})
-          </va-button>
+          </VaButton>
         </div>
       </template>
-    </va-select>
+    </VaSelect>
   </div>
 </template>
 
@@ -88,7 +85,7 @@ export default {
         "eight",
         "nine",
       ],
-      value: "",
+      value: ["one"],
     };
   },
 };

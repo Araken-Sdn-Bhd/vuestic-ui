@@ -1,6 +1,6 @@
 <template>
   <div>
-    <va-switch
+    <VaSwitch
       v-model="isDark"
       color="#5123a1"
       off-color="#ffd300"
@@ -11,19 +11,18 @@
     >
       <template #innerLabel>
         <div class="va-text-center">
-          <va-icon
+          <VaIcon
             size="24px"
             :name="isDark ? 'dark_mode' : 'light_mode'"
           />
         </div>
       </template>
-    </va-switch>
+    </VaSwitch>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useColors } from 'vuestic-ui'
 
 const { currentPresetName, applyPreset } = useColors()
 

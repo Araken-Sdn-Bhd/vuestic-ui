@@ -530,17 +530,24 @@
         </template>
       </va-data-table>
     </VbCard>
+
+    <VbCard title="Custom column display formatter" class="demo">
+      <va-data-table :items="itemsForDateFormatFn" :columns="displayFormatColumns">
+      </va-data-table>
+    </VbCard>
   </VbDemo>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import cloneDeep from 'lodash/cloneDeep.js'
-import shuffle from 'lodash/shuffle.js'
+import { cloneDeep } from '../../utils/clone-deep'
 import { DataTableColumn, DataTableSelectMode, DataTableSortingOrder, VaDataTable } from './'
 import { VaSwitch } from '../va-switch'
 import { VaPagination } from '../va-pagination'
 import { VaButton } from '../va-button'
+import { faker } from '@faker-js/faker'
+
+faker.seed(1)
 
 interface EvenItems {
     id?: number;
@@ -559,6 +566,13 @@ export default defineComponent({
   },
 
   data () {
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('en-Us', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+      })
+    }
     const evenItems: EvenItems[] = Array.from(Array(10), (u, i) => {
       return {
         id: i,
@@ -566,6 +580,16 @@ export default defineComponent({
         idSquared: `The squared index is ${i ** 2}`,
       }
     })
+    const itemsForDateFormatFn: any[] = Array.from(Array(10), (u, i) => {
+      const date = new Date()
+      return {
+        id: i,
+        name: `Number ${i}`,
+        idSquared: `The squared index is ${i ** 2}`,
+        date: new Date(date.setDate(i + 1)),
+      }
+    })
+    itemsForDateFormatFn[itemsForDateFormatFn.length - 1].date = '2024/01/01'
 
     const lackingItems = cloneDeep(evenItems)
     delete lackingItems[0].name
@@ -577,7 +601,7 @@ export default defineComponent({
     excessiveItems[5].excessiveProp = "Excessive prop's value"
     excessiveItems[5].anotherExcessiveProp = "The other excessive prop's value"
 
-    const evenItemsShuffled = shuffle(evenItems)
+    const evenItemsShuffled = faker.helpers.shuffle(evenItems)
 
     const manyItems = Array.from(Array(1000), (u, i) => {
       return {
@@ -587,7 +611,7 @@ export default defineComponent({
       }
     })
 
-    const manyItemsShuffled = shuffle(manyItems)
+    const manyItemsShuffled = faker.helpers.shuffle(manyItems)
 
     return {
       evenColumns: [
@@ -608,7 +632,17 @@ export default defineComponent({
         'idSquared',
       ],
 
+      displayFormatColumns: [
+        { key: 'id' },
+        { key: 'name', displayFormatFn: () => 'Overridden string' },
+        {
+          key: 'date',
+          displayFormatFn: (date) => { return formatDate(date) },
+        },
+      ] as DataTableColumn[],
+
       evenItems,
+      itemsForDateFormatFn,
       lackingItems,
       excessiveItems,
 

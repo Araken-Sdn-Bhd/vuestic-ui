@@ -1,30 +1,24 @@
 <template>
   <component
     :is="tagComputed"
-    ref="tabElement"
+    ref="rootElement"
     class="va-tab"
     role="tab"
     :aria-selected="isActive"
     :aria-disabled="$props.disabled || parentDisabled"
-    :href="hrefComputed"
-    :target="target"
-    :to="to"
-    :replace="replace"
-    :exact="exact"
-    :active-class="activeClass"
-    :exact-active-class="exactActiveClass"
     :class="classComputed"
     :style="computedStyle"
     @mouseenter="updateHoverState(true)"
     @mouseleave="updateHoverState(false)"
+    @focus="onFocus"
+    @click="onTabClick"
+    @keydown.enter="onTabKeydown"
+    :tabindex="tabIndexComputed"
+    v-on="keyboardFocusListeners"
+    v-bind="linkAttributesComputed"
   >
     <div
       class="va-tab__content"
-      :tabindex="tabIndexComputed"
-      @focus="onFocus"
-      @click="onTabClick"
-      @keydown.enter="onTabKeydown"
-      v-on="keyboardFocusListeners"
     >
       <slot>
         <va-icon
@@ -42,147 +36,134 @@
   </component>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, inject, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+<script lang="ts" setup>
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 
 import {
   useComponentPresetProp,
   useKeyboardOnlyFocus,
   useRouterLink, useRouterLinkProps,
   useColors,
+  useElementWidth,
 } from '../../../../composables'
 
 import { TabsViewKey, TabsView, TabComponent } from '../../types'
 
 import { VaIcon } from '../../../va-icon'
+import { unwrapEl } from '../../../../utils/unwrapEl'
 
-export default defineComponent({
+defineOptions({
   name: 'VaTab',
-  components: { VaIcon },
-  emits: ['click', 'keydown-enter', 'focus'],
+})
 
-  props: {
-    ...useRouterLinkProps,
-    ...useComponentPresetProp,
-    selected: { type: Boolean, default: false },
-    color: { type: String, default: '' },
-    icon: { type: String, default: '' },
-    label: { type: String, default: '' },
-    disabled: { type: Boolean },
-    name: { type: [String, Number] },
-    tag: { type: String, default: 'div' },
-  },
+const props = defineProps({
+  ...useRouterLinkProps,
+  ...useComponentPresetProp,
+  selected: { type: Boolean, default: false },
+  color: { type: String, default: '' },
+  icon: { type: String, default: '' },
+  label: { type: String, default: '' },
+  disabled: { type: Boolean },
+  name: { type: [String, Number] },
+  tag: { type: String, default: 'div' },
+})
 
-  setup: (props, { emit }) => {
-    const tabElement = shallowRef<HTMLElement>()
+const emit = defineEmits(['click', 'keydown-enter', 'focus'])
 
-    const isActive = ref(false)
-    const hoverState = ref(false)
-    const rightSidePosition = ref(0)
-    const leftSidePosition = ref(0)
+const rootElement = shallowRef<HTMLElement>()
+const tabElement = computed(() => unwrapEl(rootElement.value))
 
-    const { keyboardFocusListeners, hasKeyboardFocus } = useKeyboardOnlyFocus()
+const isActive = ref(false)
+const hoverState = ref(false)
+const rightSidePosition = ref(0)
+const leftSidePosition = ref(0)
 
-    const { tagComputed, hrefComputed, isActiveRouterLink } = useRouterLink(props)
-    const classComputed = computed(() => ({ 'va-tab--disabled': props.disabled }))
-    const {
-      parentDisabled,
-      selectTab,
-      moveToTab,
-      registerTab,
-      unregisterTab,
-    } = inject<TabsView>(TabsViewKey, {
-      parentDisabled: false,
-      tabsList: [],
-      selectTab: (tab: TabComponent) => tab,
-      moveToTab: (tab: TabComponent) => tab,
-      registerTab: (tab: TabComponent) => tab,
-      unregisterTab: (tab: TabComponent) => tab,
-    })
-    const tabIndexComputed = computed(() => (props.disabled || parentDisabled) ? -1 : 0)
+const { keyboardFocusListeners, hasKeyboardFocus } = useKeyboardOnlyFocus()
 
-    const { getColor } = useColors()
-    const colorComputed = computed(() => getColor(props.color))
+const { tagComputed, isActiveRouterLink, linkAttributesComputed } = useRouterLink(props)
+const classComputed = computed(() => ({ 'va-tab--disabled': props.disabled }))
+const {
+  parentDisabled,
+  selectTab,
+  moveToTab,
+  registerTab,
+  unregisterTab,
+} = inject<TabsView>(TabsViewKey, {
+  parentDisabled: false,
+  tabsList: [],
+  selectTab: (tab: TabComponent) => tab,
+  moveToTab: (tab: TabComponent) => tab,
+  registerTab: (tab: TabComponent) => tab,
+  unregisterTab: (tab: TabComponent) => tab,
+})
+const tabIndexComputed = computed(() => (props.disabled || parentDisabled) ? -1 : 0)
 
-    const computedStyle = computed(() => ({
-      color: hoverState.value || isActive.value ? colorComputed.value : 'inherit',
-    }))
+const { getColor } = useColors()
+const colorComputed = computed(() => getColor(props.color))
 
-    const updateHoverState = (isHover: boolean) => {
-      hoverState.value = isHover
-    }
+const computedStyle = computed(() => ({
+  color: hoverState.value || isActive.value ? colorComputed.value : 'inherit',
+}))
 
-    const updateSidePositions = () => {
-      const componentOffsetLeft = tabElement.value?.offsetLeft || 0
-      const componentOffsetWidth = tabElement.value?.offsetWidth || 0
+const updateHoverState = (isHover: boolean) => {
+  hoverState.value = isHover
+}
 
-      rightSidePosition.value = componentOffsetLeft + componentOffsetWidth
-      leftSidePosition.value = componentOffsetLeft
-    }
+const updateSidePositions = () => {
+  const componentOffsetLeft = tabElement.value?.offsetLeft || 0
+  const componentOffsetWidth = tabElement.value?.offsetWidth || 0
 
-    const onTabClick = () => {
-      selectTab(tabComponent)
-      emit('click')
-    }
+  rightSidePosition.value = componentOffsetLeft + componentOffsetWidth
+  leftSidePosition.value = componentOffsetLeft
+}
 
-    const onTabKeydown = () => {
-      selectTab(tabComponent)
-      emit('keydown-enter')
-    }
+const width = useElementWidth(rootElement)
 
-    const onFocus = () => {
-      if (hasKeyboardFocus.value) {
-        moveToTab(tabComponent)
-      }
+watch(width, () => {
+  updateSidePositions()
+})
 
-      emit('focus')
-    }
+const onTabClick = async () => {
+  await nextTick()
+  selectTab(tabComponent)
+  emit('click')
+}
 
-    const tabComponent: TabComponent = {
-      name: computed(() => props.name),
-      id: null,
-      tabElement,
-      isActive,
-      tabIndexComputed,
-      isActiveRouterLink,
-      rightSidePosition,
-      leftSidePosition,
-      onTabClick,
-      onTabKeydown,
-      onFocus,
-      updateSidePositions,
-    }
+const onTabKeydown = async () => {
+  await nextTick()
+  selectTab(tabComponent)
+  emit('keydown-enter')
+}
 
-    onMounted(() => {
-      registerTab(tabComponent)
-    })
+const onFocus = () => {
+  if (hasKeyboardFocus.value) {
+    moveToTab(tabComponent)
+  }
 
-    onBeforeUnmount(() => {
-      unregisterTab(tabComponent)
-    })
+  emit('focus')
+}
 
-    return {
-      tabElement,
-      parentDisabled,
-      isActive,
-      hoverState,
-      tagComputed,
-      hrefComputed,
-      isActiveRouterLink,
-      colorComputed,
-      classComputed,
-      computedStyle,
-      tabIndexComputed,
-      rightSidePosition,
-      leftSidePosition,
-      updateHoverState,
-      updateSidePositions,
-      onTabClick,
-      onTabKeydown,
-      onFocus,
-      keyboardFocusListeners,
-    }
-  },
+const tabComponent: TabComponent = {
+  name: computed(() => props.name),
+  id: null,
+  tabElement,
+  isActive,
+  tabIndexComputed,
+  isActiveRouterLink,
+  rightSidePosition,
+  leftSidePosition,
+  onTabClick,
+  onTabKeydown,
+  onFocus,
+  updateSidePositions,
+}
+
+onMounted(() => {
+  registerTab(tabComponent)
+})
+
+onBeforeUnmount(() => {
+  unregisterTab(tabComponent)
 })
 </script>
 
@@ -202,6 +183,8 @@ export default defineComponent({
   vertical-align: var(--va-tab-vertical-align);
   color: var(--va-tab-color);
 
+  @include keyboard-focus-outline($radius: 2px, $offset: -2px);
+
   &__content {
     align-items: var(--va-tab-content-align-items);
     color: var(--va-tab-content-color);
@@ -216,8 +199,6 @@ export default defineComponent({
     white-space: var(--va-tab-content-white-space);
     padding: var(--va-tab-content-padding);
     cursor: var(--va-tab-content-cursor);
-
-    @include keyboard-focus-outline($radius: 2px, $offset: -2px);
   }
 
   &__icon {

@@ -8,13 +8,14 @@ import { insertHead } from './insert-head';
 import { insertImport } from './insert-import';
 import { insertVuesticPlugin } from './insert-plugin';
 import { useVuesticConfig } from '../../composables/useVuesticConfig';
+import { restructureProject } from './vue-restructure-project';
 
 export const addVuesticToVue3App = async () => {
   const { projectName } = await useUserAnswers()
 
   // Install vuestic-ui
   const { addDependency } = await usePackageJson()
-  addDependency('vuestic-ui', versions['vuestic-ui'])
+  await addDependency('vuestic-ui', versions['vuestic-ui'])
 
   // Add plugin
   const mainPath = resolvePath(process.cwd(), projectName, 'src/main.js') || resolvePath(process.cwd(), projectName, 'src/main.ts')
@@ -44,4 +45,6 @@ export const addVuesticToVue3App = async () => {
     `<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">`
   ])
   await writeFile(htmlPath, htmlSource)
+
+  await restructureProject()
 }

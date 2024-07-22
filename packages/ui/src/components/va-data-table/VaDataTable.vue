@@ -71,23 +71,33 @@
               <tr
                 v-if="showNoDataHtml"
                 key="showNoDataHtml"
+                class="va-data-table__table-tr"
               >
                 <td
-                  class="no-data"
-                  :colspan="columnsComputed.length + (selectable ? 1 : 0)"
-                  v-html="noDataHtml"
-                />
+                  class="va-data-table__table-td no-data"
+                  colspan="99999"
+                >
+                  <slot name="no-data">
+                    <div v-html="noDataHtml" />
+                  </slot>
+                </td>
               </tr>
 
               <tr
                 v-else-if="showNoDataFilteredHtml"
                 key="showNoDataFilteredHtml"
+                class="va-data-table__table-tr"
               >
                 <td
-                  class="no-data"
-                  :colspan="columnsComputed.length + (selectable ? 1 : 0)"
-                  v-html="noDataFilteredHtml"
-                />
+                  class="va-data-table__table-td no-data"
+                  colspan="99999"
+                >
+                  <slot name="no-filtered-data">
+                    <slot name="no-data">
+                      <div v-html="noDataFilteredHtml" />
+                    </slot>
+                  </slot>
+                </td>
               </tr>
 
               <template
@@ -139,15 +149,16 @@
 
                     <slot v-else name="cell" v-bind="{ cell, row }">
                       <span v-if="$props.grid" class="va-data-table__grid-column-header">{{ columnsComputed[cellIndex].label }}</span>
-                      {{ cell.value }}
+                      {{ cellData(cell, columnsComputed[cellIndex]) }}
                     </slot>
                   </td>
                 </tr>
-                <tr
-                  v-if="row.isExpandableRowVisible"
-                  class="va-data-table__table-tr--expanded va-data-table__table-expanded-content"
-                >
-                  <td :colspan="row.cells.length">
+                <tr v-if="row.isExpandableRowVisible" class="va-data-table__table-tr">
+                  <td
+                    class="va-data-table__table-expanded-content"
+                    colspan="99999"
+                    :key="uniqueKey(row, index)"
+                  >
                     <slot
                       name="expandableRow"
                       v-bind="row"
@@ -161,7 +172,7 @@
           </tbody>
 
           <tfoot
-            v-if="$slots.footer || (footerClone && !$props.grid)"
+            v-if="['footer', 'footerPrepend', 'footerAppend'].some(field => $slots[field]) || (footerClone && !$props.grid)"
             class="va-data-table__table-tfoot"
             :class="{ 'va-data-table__table-tfoot--sticky': $props.stickyFooter }"
             :style="{ bottom: isVirtualScroll && $props.stickyFooter ? `${currentListOffset}px` : undefined }"
@@ -197,9 +208,7 @@
 </template>
 
 <script lang="ts">
-import { PropType, defineComponent, computed, TableHTMLAttributes, StyleValue } from 'vue'
-import omit from 'lodash/omit.js'
-import pick from 'lodash/pick.js'
+import { PropType, computed, TableHTMLAttributes, StyleValue, useAttrs } from 'vue'
 
 import { useColumns, useColumnsProps } from './hooks/useColumns'
 import { usePaginatedRows, usePaginatedRowsProps } from './hooks/usePaginatedRows'
@@ -207,21 +216,23 @@ import { useSelectableRow, useSelectableProps } from './hooks/useSelectableRow'
 import { useStylable, useStylableProps } from './hooks/useStylable'
 import { useBinding, useBindingProps } from './hooks/useBinding'
 import { useAnimationName, useAnimationNameProps } from './hooks/useAnimationName'
-import { useRows, useRowsProps } from './hooks/useRows'
+import { useRows, createRowsProps } from './hooks/useRows'
 import { useFilterable, useFilterableProps } from './hooks/useFilterable'
 import { useSortable, useSortableProps } from './hooks/useSortable'
 import { useTableScroll, useTableScrollProps, useTableScrollEmits } from './hooks/useTableScroll'
 
-import { useComponentPresetProp, useTranslation, useThrottleProps } from '../../composables'
+import { useComponentPresetProp, useTranslation, useTranslationProp, useThrottleProps } from '../../composables'
 
 import { extractComponentProps, filterComponentProps } from '../../utils/component-options'
 
-import type { DataTableRow } from './types'
+import type { DataTableCell, DataTableColumnInternal, DataTableRow } from './types'
 
 import { VaDataTableThRow } from './components'
 import { VaVirtualScroller } from '../va-virtual-scroller'
 import { VaInnerLoading } from '../va-inner-loading'
 import { VaCheckbox } from '../va-checkbox'
+import { pick } from '../../utils/pick'
+import { omit } from '../../utils/omit'
 
 const VaVirtualScrollerProps = extractComponentProps(VaVirtualScroller, ['items', 'trackBy', 'horizontal', 'disabled', 'table'])
 const VaDataTableThRowProps = extractComponentProps(VaDataTableThRow)
@@ -229,6 +240,7 @@ const VaDataTableThRowProps = extractComponentProps(VaDataTableThRow)
 type emitNames = 'update:modelValue' |
   'update:sortBy' |
   'update:sortingOrder' |
+  'columnSorted' |
   'filtered' |
   'sorted' |
   'selectionChange' |
@@ -237,200 +249,169 @@ type emitNames = 'update:modelValue' |
   'row:contextmenu' |
   'scroll:top' |
   'scroll:bottom'
+</script>
 
-export default defineComponent({
+<script lang="ts" generic="Item extends Record<string, any>" setup>
+
+const { tp } = useTranslation()
+
+defineOptions({
   name: 'VaDataTable',
-
-  components: {
-    VaDataTableThRow,
-    VaVirtualScroller,
-    VaInnerLoading,
-    VaCheckbox,
-  },
-
   inheritAttrs: false,
-
-  props: {
-    ...useComponentPresetProp,
-    ...VaVirtualScrollerProps,
-    ...useAnimationNameProps,
-    ...useBindingProps,
-    ...useTableScrollProps,
-    ...useSortableProps,
-    ...useStylableProps,
-    ...useColumnsProps,
-    ...useFilterableProps,
-    ...usePaginatedRowsProps,
-    ...useRowsProps,
-    ...useSelectableProps,
-    ...useThrottleProps,
-    ...pick(VaDataTableThRowProps, ['ariaSelectAllRowsLabel', 'ariaSortColumnByLabel']),
-    hoverable: { type: Boolean, default: false },
-    clickable: { type: Boolean, default: false },
-    loading: { type: Boolean, default: false },
-    loadingColor: { type: String, default: 'primary' },
-    noDataHtml: { type: String, default: 'No items' },
-    noDataFilteredHtml: { type: String, default: 'No items match the provided filtering condition' },
-    hideDefaultHeader: { type: Boolean, default: false },
-    footerClone: { type: Boolean, default: false },
-    striped: { type: Boolean, default: false },
-    virtualScroller: { type: Boolean, default: false },
-    virtualTrackBy: { type: [String, Number] as PropType<string | number>, default: 'initialIndex' },
-    grid: { type: Boolean, default: false },
-    gridColumns: { type: Number, default: 0 },
-    wrapperSize: { type: [Number, String] as PropType<number | string | 'auto'>, default: 'auto' },
-
-    ariaSelectRowLabel: { type: String, default: '$t:selectRowByIndex' },
-  },
-
-  emits: [
-    'update:modelValue', // `modelValue` is selectedItems
-    'update:sortBy',
-    'update:sortingOrder',
-    'filtered',
-    'sorted',
-    'selectionChange',
-    'row:click',
-    'row:dblclick',
-    'row:contextmenu',
-    ...useTableScrollEmits,
-  ],
-
-  setup (props, { attrs, emit }) {
-    const { columnsComputed } = useColumns(props)
-
-    const { rowsComputed } = useRows(columnsComputed, props)
-
-    const { filteredRows } = useFilterable(rowsComputed, props, emit)
-
-    const {
-      sortBySync,
-      sortingOrderSync,
-      toggleSorting,
-      sortedRows,
-      sortingOrderIconName,
-    } = useSortable(columnsComputed, filteredRows, props, emit)
-
-    const { paginatedRows } = usePaginatedRows(sortedRows, props)
-
-    const {
-      ctrlSelectRow,
-      shiftSelectRows,
-      toggleBulkSelection,
-      isRowSelected,
-      severalRowsSelected,
-      allRowsSelected,
-      toggleRowSelection,
-    } = useSelectableRow(paginatedRows, props, emit)
-
-    const {
-      CSSVariables,
-      getCellCSSVariables,
-      getClass,
-      getStyle,
-    } = useStylable(props)
-
-    const { getRowBind, getCellBind } = useBinding(props)
-
-    const animationName = useAnimationName(props, paginatedRows)
-
-    const showNoDataHtml = computed(() => props.items.length === 0)
-
-    const showNoDataFilteredHtml = computed(() => paginatedRows.value.length === 0)
-
-    const onRowClickHandler = (name: emitNames, event: Event, row: DataTableRow) => {
-      emit(name, {
-        event,
-        item: row.source,
-        itemIndex: row.initialIndex,
-        row,
-      })
-
-      if (props.selectable && props.grid) {
-        toggleRowSelection(row)
-      }
-    }
-
-    const computedTableAttributes = computed(() => ({
-      ...omit(attrs, ['class', 'style']),
-      class: pick(props, ['striped', 'selectable', 'hoverable', 'clickable']),
-    }) as TableHTMLAttributes)
-
-    const filteredVirtualScrollerProps = filterComponentProps(VaVirtualScrollerProps)
-    const virtualScrollerPropsComputed = computed(() => ({
-      ...filteredVirtualScrollerProps.value,
-      items: paginatedRows.value,
-      trackBy: props.virtualTrackBy,
-      disabled: !props.virtualScroller,
-      table: true,
-    }))
-
-    const computedAttributes = computed(() => ({
-      class: [
-        { 'va-data-table--sticky': props.stickyHeader || props.stickyFooter },
-        { 'va-data-table--scroll': !!props.height },
-        { 'va-data-table--virtual-scroller': isVirtualScroll.value },
-        { 'va-data-table--grid': props.grid },
-        attrs.class as string[],
-      ],
-      style: [attrs.style as StyleValue],
-      ...virtualScrollerPropsComputed.value,
-    }))
-
-    const filteredThProps = filterComponentProps(VaDataTableThRowProps)
-    const thAttributesComputed = computed(() => ({
-      ...filteredThProps.value,
-      columns: columnsComputed.value,
-      sortingOrderIconName: sortingOrderIconName.value,
-      severalRowsSelected: severalRowsSelected.value,
-      sortingOrderSync: sortingOrderSync.value,
-      allRowsSelected: allRowsSelected.value,
-      sortBySync: sortBySync.value,
-    }))
-
-    const {
-      scrollContainer,
-      topTrigger,
-      bottomTrigger,
-      doRenderTopTrigger,
-      doRenderBottomTrigger,
-    } = useTableScroll(props, emit)
-
-    const isVirtualScroll = computed(() => props.virtualScroller && !props.grid)
-
-    const gridColumnsCount = computed(() => props.gridColumns || 'var(--va-data-table-grid-tbody-columns)')
-
-    return {
-      ...useTranslation(),
-      scrollContainer,
-      topTrigger,
-      bottomTrigger,
-      columnsComputed,
-      ctrlSelectRow,
-      shiftSelectRows,
-      toggleBulkSelection,
-      isRowSelected,
-      toggleSorting,
-      CSSVariables,
-      getCellCSSVariables,
-      getClass,
-      getStyle,
-      thAttributesComputed,
-      showNoDataHtml,
-      showNoDataFilteredHtml,
-      onRowClickHandler,
-      computedAttributes,
-      computedTableAttributes,
-      animationName,
-      getRowBind,
-      getCellBind,
-      doRenderTopTrigger,
-      doRenderBottomTrigger,
-      isVirtualScroll,
-      gridColumnsCount,
-    }
-  },
 })
+
+const props = defineProps({
+  ...useComponentPresetProp,
+  ...VaVirtualScrollerProps,
+  ...useAnimationNameProps,
+  ...useBindingProps,
+  ...useTableScrollProps,
+  ...useSortableProps,
+  ...useStylableProps,
+  ...useColumnsProps,
+  ...useFilterableProps,
+  ...usePaginatedRowsProps,
+  ...createRowsProps<Item>(),
+  ...useSelectableProps,
+  ...useThrottleProps,
+  ...pick(VaDataTableThRowProps, ['ariaSelectAllRowsLabel', 'ariaSortColumnByLabel']),
+  hoverable: { type: Boolean, default: false },
+  clickable: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
+  loadingColor: { type: String, default: 'primary' },
+  noDataHtml: { type: String, default: 'No items' },
+  noDataFilteredHtml: { type: String, default: 'No items match the provided filtering condition' },
+  hideDefaultHeader: { type: Boolean, default: false },
+  footerClone: { type: Boolean, default: false },
+  striped: { type: Boolean, default: false },
+  virtualScroller: { type: Boolean, default: false },
+  virtualTrackBy: { type: [String, Number] as PropType<string | number>, default: 'initialIndex' },
+  grid: { type: Boolean, default: false },
+  gridColumns: { type: [Number, String], default: 0 },
+  wrapperSize: { type: [Number, String] as PropType<number | string | 'auto'>, default: 'auto' },
+
+  ariaSelectRowLabel: useTranslationProp('$t:selectRowByIndex'),
+})
+
+const emit = defineEmits([
+  'update:modelValue', // `modelValue` is selectedItems
+  'update:sortBy',
+  'update:sortingOrder',
+  'filtered',
+  'sorted',
+  'selectionChange',
+  'row:click',
+  'row:dblclick',
+  'row:contextmenu',
+  'columnSorted',
+  ...useTableScrollEmits,
+])
+
+const { columnsComputed } = useColumns(props)
+
+const { rowsComputed } = useRows(columnsComputed, props)
+
+const { filteredRows } = useFilterable(rowsComputed, props, emit)
+
+const {
+  sortBySync,
+  sortingOrderSync,
+  toggleSorting,
+  sortedRows,
+  sortingOrderIconName,
+} = useSortable(columnsComputed, filteredRows, props, emit)
+
+const { paginatedRows } = usePaginatedRows<Item>(sortedRows, props)
+
+const {
+  ctrlSelectRow,
+  shiftSelectRows,
+  toggleBulkSelection,
+  isRowSelected,
+  severalRowsSelected,
+  allRowsSelected,
+  toggleRowSelection,
+} = useSelectableRow(paginatedRows, props, emit)
+
+const {
+  CSSVariables,
+  getCellCSSVariables,
+  getClass,
+  getStyle,
+} = useStylable(props)
+
+const { getRowBind, getCellBind } = useBinding(props)
+
+const animationName = useAnimationName(props, paginatedRows)
+
+const showNoDataHtml = computed(() => props.items.length === 0)
+
+const showNoDataFilteredHtml = computed(() => paginatedRows.value.length === 0)
+
+const onRowClickHandler = (name: emitNames, event: Event, row: DataTableRow) => {
+  emit(name, {
+    event,
+    item: row.source,
+    itemIndex: row.initialIndex,
+    row,
+  })
+
+  if (props.selectable && props.grid) {
+    toggleRowSelection(row)
+  }
+}
+
+const computedTableAttributes = computed(() => (({
+  ...omit(attrs, ['class', 'style']),
+  class: pick(props, ['striped', 'selectable', 'hoverable', 'clickable']),
+}) as TableHTMLAttributes))
+
+const filteredVirtualScrollerProps = filterComponentProps(VaVirtualScrollerProps)
+const virtualScrollerPropsComputed = computed(() => ({
+  ...filteredVirtualScrollerProps.value,
+  items: paginatedRows.value,
+  trackBy: props.virtualTrackBy,
+  disabled: !props.virtualScroller,
+  table: true,
+}))
+
+const attrs = useAttrs()
+const computedAttributes = computed(() => ({
+  class: [
+    { 'va-data-table--sticky': props.stickyHeader || props.stickyFooter },
+    { 'va-data-table--scroll': !!props.height },
+    { 'va-data-table--virtual-scroller': isVirtualScroll.value },
+    { 'va-data-table--grid': props.grid },
+    attrs.class as string[],
+  ],
+  style: [attrs.style as StyleValue],
+  ...virtualScrollerPropsComputed.value,
+}))
+
+const filteredThProps = filterComponentProps(VaDataTableThRowProps)
+const thAttributesComputed = computed(() => ({
+  ...filteredThProps.value,
+  columns: columnsComputed.value,
+  sortingOrderIconName: sortingOrderIconName.value,
+  severalRowsSelected: severalRowsSelected.value,
+  sortingOrderSync: sortingOrderSync.value,
+  allRowsSelected: allRowsSelected.value,
+  sortBySync: sortBySync.value,
+}))
+
+const {
+  scrollContainer,
+  topTrigger,
+  bottomTrigger,
+  doRenderTopTrigger,
+  doRenderBottomTrigger,
+} = useTableScroll(props, emit)
+
+const isVirtualScroll = computed(() => props.virtualScroller && !props.grid)
+
+const gridColumnsCount = computed(() => props.gridColumns || 'var(--va-data-table-grid-tbody-columns)')
+
+const cellData = (cellData: DataTableCell, internalColumnData: DataTableColumnInternal) => internalColumnData.displayFormatFn ? internalColumnData.displayFormatFn(cellData.value) : cellData.value
 </script>
 
 <style lang="scss">
@@ -484,7 +465,6 @@ export default defineComponent({
 
       th {
         border-bottom: none;
-        box-shadow: var(--va-data-table-thead-border-bottom-shadow);
       }
 
       &--sticky {
@@ -499,16 +479,16 @@ export default defineComponent({
       .no-data {
         text-align: var(--va-data-table-no-data-text-align);
         vertical-align: var(--va-data-table-no-data-vertical-align);
+        width: 100%;
       }
     }
 
     .va-data-table__table-tfoot {
       color: var(--va-data-table-tfoot-color);
-      border-top: var(--va-data-table-thead-border);
+      border-top: var(--va-data-table-tfoot-border, var(--va-data-table-thead-border));
 
       th {
         border-bottom: none;
-        box-shadow: var(--va-data-table-thead-border-top-shadow);
       }
 
       &--sticky {
@@ -555,11 +535,14 @@ export default defineComponent({
     &.striped {
       .va-data-table__table-tbody {
         .va-data-table__table-tr {
-          &:nth-child(even) {
+          &:nth-of-type(2n) {
             &:not(.selected) {
-              position: relative;
-
-              @include va-background(var(--va-data-table-striped-tr-background-color), var(--va-data-table-striped-tr-opacity), -1);
+              td {
+                // Position relative doesn't work on tr in Safari
+                position: relative;
+                background: var(--va-data-table-striped-tr-background-color);
+                opacity: var(--va-data-table-striped-tr-opacity);
+              }
             }
           }
         }
@@ -569,12 +552,16 @@ export default defineComponent({
     &.selectable,
     &.hoverable {
       .va-data-table__table-tbody {
-        .va-data-table__table-tr,
-        .va-data-table__table-tr:nth-child(even) {
-          &:hover {
+        .va-data-table__table-tr {
+          td {
+            // Position relative doesn't work on Safari on <tr> elements, only on TD.
             position: relative;
+          }
 
-            @include va-background(var(--va-data-table-hover-color), 1, -1);
+          &:hover {
+            td {
+              @include va-background(var(--va-data-table-hover-color), 1, -1);
+            }
           }
         }
       }
@@ -582,6 +569,7 @@ export default defineComponent({
 
     .table-transition-fade-leave-active {
       transition: opacity var(--va-data-table-transition);
+      display: none;
     }
 
     .table-transition-fade-enter-active {
@@ -601,6 +589,7 @@ export default defineComponent({
 
     .table-transition-shuffle-leave-active {
       transition: none;
+      display: none;
     }
 
     .table-transition-shuffle-enter-active {

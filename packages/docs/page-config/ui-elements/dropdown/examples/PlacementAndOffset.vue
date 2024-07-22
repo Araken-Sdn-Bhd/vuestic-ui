@@ -13,28 +13,32 @@
         class="p-[4rem]"
       >
         <div class="flex flex-col items-center">
-          <va-dropdown
+          <VaDropdown
             :model-value="true"
             :placement="placementWIthAlias"
             :close-on-click-outside="false"
             :close-on-anchor-click="false"
             :close-on-content-click="false"
             :offset="offset"
+            :stateful="false"
           >
             <template #anchor>
               <div><Coordinates :placement="placement" /></div>
             </template>
 
-            <va-dropdown-content> Dropdown </va-dropdown-content>
-          </va-dropdown>
+            <VaDropdownContent> Dropdown </VaDropdownContent>
+          </VaDropdown>
         </div>
       </td>
     </tr>
     <tr>
-      <td>Placement:</td>
+      <td class="pr-4">
+        Placement:
+      </td>
       <td>
-        <va-select
+        <VaSelect
           v-model="placementWIthAlias"
+          class="w-[10rem] sm:w-[unset]"
           :options="placements"
         />
       </td>
@@ -44,7 +48,7 @@
         Main:
       </td>
       <td>
-        <va-counter
+        <VaCounter
           v-model="offset[0]"
           manual-input
         />
@@ -55,7 +59,7 @@
         Cross:
       </td>
       <td>
-        <va-counter
+        <VaCounter
           v-model="offset[1]"
           manual-input
         />

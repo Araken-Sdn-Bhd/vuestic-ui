@@ -18,7 +18,7 @@
           <td>{{ user.email }}</td>
           <td>{{ user.country }}</td>
           <td>
-            <va-badge
+            <VaBadge
               :text="user.status"
               :color="user.status"
             />
@@ -70,7 +70,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style>
 .va-table-responsive {
   overflow: auto;
 }

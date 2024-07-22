@@ -15,7 +15,7 @@
         :aria-label="tp($props.ariaRemoveFileLabel)"
         size="small"
         color="danger"
-        flat
+        preset="secondary"
         @click="$emit('remove')"
       >
         Delete
@@ -25,38 +25,33 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
-import { useStrictInject, useTranslation } from '../../../composables'
+import { PropType } from 'vue'
+import { useStrictInject, useTranslation, useTranslationProp } from '../../../composables'
 
 import { VaButton, VaListItem, VaListItemSection } from '../../index'
 import { VaFileUploadKey, ConvertedFile } from '../types'
 
 const INJECTION_ERROR_MESSAGE = 'The VaFileUploadSingleItem component should be used in the context of VaFileUpload component'
-
-export default defineComponent({
-  name: 'VaFileUploadSingleItem',
-
-  components: {
-    VaButton,
-    VaListItem,
-    VaListItemSection,
-  },
-
-  emits: ['remove'],
-
-  props: {
-    file: { type: Object as PropType<ConvertedFile | null>, default: null },
-    ariaRemoveFileLabel: { type: String, default: '$t:removeFile' },
-  },
-
-  setup: () => ({
-    ...useTranslation(),
-    disabled: useStrictInject(VaFileUploadKey, INJECTION_ERROR_MESSAGE).disabled,
-  }),
-})
 </script>
 
-<style lang='scss'>
+<script lang="ts" setup>
+
+defineOptions({
+  name: 'VaFileUploadSingleItem',
+})
+
+const props = defineProps({
+  file: { type: Object as PropType<ConvertedFile | null>, default: null },
+  ariaRemoveFileLabel: useTranslationProp('$t:removeFile'),
+})
+
+const emit = defineEmits(['remove'])
+
+const { t, tp } = useTranslation()
+const { disabled } = useStrictInject(VaFileUploadKey, INJECTION_ERROR_MESSAGE)
+</script>
+
+<style lang="scss">
 .va-file-upload-single-item {
   width: 100%;
 

@@ -37,7 +37,7 @@
         </div>
 
         <div class="footer__buttons">
-          <va-button
+          <VaButton
             v-for="{ href, icon, label } in buttons"
             :key="label"
             class="footer__buttons__button"
@@ -47,13 +47,13 @@
             size="large"
           >
             <template #prepend>
-              <va-icon
+              <VaIcon
                 class="footer__buttons__icon"
                 :component="icon"
               />
             </template>
             {{ label }}
-          </va-button>
+          </VaButton>
         </div>
 
         <SocialsLinks class="footer__socials" />
@@ -66,6 +66,10 @@
           >
             hello@epicmax.co
           </a>
+          <br>
+          <a href="https://www.iubenda.com/privacy-policy/50799764" title="Privacy Policy ">Privacy Policy</a>
+          •
+          <a href="https://www.iubenda.com/privacy-policy/50799764/cookie-policy" title="Privacy Policy ">Cookie Policy</a>
         </div>
       </div>
       <!--<LandingNewsBanner />-->
@@ -76,7 +80,7 @@
 <script lang="ts" setup>
 import { markRaw, computed } from 'vue'
 
-import { useElementTextColor, useBreakpoint } from 'vuestic-ui'
+import { useElementTextColor } from 'vuestic-ui'
 
 import IconEpicmax from './icons/IconEpicmax.vue'
 import IconAdmin from './icons/IconAdmin.vue'
@@ -200,6 +204,7 @@ const sitemap = computed(() => ([
         color: unset;
         filter: unset;
       }
+
       &:hover {
         text-decoration: underline;
       }

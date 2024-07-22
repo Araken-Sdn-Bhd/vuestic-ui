@@ -1,10 +1,9 @@
 <template>
-  <div class="flex gap-5 flex-wrap">
-    <va-time-input
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+    <VaTimeInput
       v-model="value"
-      class="mr-3"
     />
-    <va-time-input
+    <VaTimeInput
       v-model="value"
       ampm
     />

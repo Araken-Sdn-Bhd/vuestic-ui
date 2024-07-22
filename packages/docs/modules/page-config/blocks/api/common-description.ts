@@ -10,11 +10,17 @@ export default
     clickPrependInner: "The event is triggered by clicking on the `prependInner` slot",
     clickAppend: "The event is triggered by clicking on the `append` slot",
     clickAppendInner: "The event is triggered by clicking on the `appendInner` slot",
-    updateModelValue: "The event is triggered when the component needs to change the model. Is also used by `v-model`",
+    updateModelValue: "The event is triggered when the component needs to change the model. Is also used by `v-model` and must be listed after the `v-model`",
     updateFocused: "The event is triggered when the component needs to toggle the focus",
-    eventArgument: "The event argument is:"
+    eventArgument: "The event argument is:",
+    'updateDirty': "Fires when the dirty state changes",
+    'updateError': "Fires when the error state changes",
+    'updateErrorMessages': "Fires when the error messages change",
   },
   props: {
+    ariaLabel: "Sets the `aria-label` attribute.",
+    ariaLabeledby: "Sets the `aria-labelledby` attribute.",
+    role: "Sets the `role` attribute.",
     align: "Customizes horizontal position of component (flex based). Available values are strings: 'left', 'center', 'right', 'between', 'around', 'stretch'.",
     id: "Applies `id` to internal input component. Useful for native forms.",
     name: "Applies `name` to internal input component. Useful for native forms.",
@@ -103,17 +109,18 @@ export default
     ariaPreviousPeriodLabel: "The aria-label of the \"previous period\" button",
     ariaRemoveFileLabel: "The aria-label of the \"remove file\" button",
     ariaResetLabel: "The aria-label of the \"reset\" button",
-    background: "The color name of the backgound color",
+    background: "The color name of the background color",
     innerAnchorSelector: "Anchor CSS selector inside passed slot",
     cellHeight: "Height of the time cell",
     teleport: "Element where content will be rendered",
     visibleCellsCount: "Count of time cells to display",
     hidePeriodSwitch: "Hide period column",
+    dirty: "Sets the dirty state of the component",
+    clearValue: "Component value that will be used as new value when component is cleared",
   },
   slots: {
     scopeAvailable: "Slot scope available:"
   },
   methods: {
-    
   }
 }

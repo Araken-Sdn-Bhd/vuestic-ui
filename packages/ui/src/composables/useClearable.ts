@@ -5,7 +5,7 @@ import { useFocus } from './useFocus'
 interface ClearableProps {
   clearable: boolean
   clearableIcon: string
-  clearValue: any
+  clearValue?: any
   disabled?: boolean
   readonly?: boolean
   success?: boolean
@@ -48,7 +48,7 @@ export const useClearable = (
   const clearIconProps = computed(() => ({
     name: props.clearableIcon,
     color: clearIconColor.value,
-    size: 'small',
+    size: 'medium',
     tabindex: canBeCleared.value ? 0 : -1,
   }))
 

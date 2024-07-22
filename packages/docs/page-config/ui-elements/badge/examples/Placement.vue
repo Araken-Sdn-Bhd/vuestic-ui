@@ -1,55 +1,55 @@
 <template>
   <div
-    class="flex gap-8 items-center"
+    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
     style="--va-badge-text-wrapper-border-radius: 50%;"
   >
-    <va-badge
+    <VaBadge
       overlap
       text="5"
     >
-      <va-button>
+      <VaButton>
         Button
-      </va-button>
-    </va-badge>
+      </VaButton>
+    </VaBadge>
 
-    <va-badge
+    <VaBadge
       overlap
       text="5"
       placement="bottom-end"
     >
-      <va-button>
+      <VaButton>
         Button
-      </va-button>
-    </va-badge>
+      </VaButton>
+    </VaBadge>
 
-    <va-badge
+    <VaBadge
       overlap
       text="5"
       placement="top-start"
     >
-      <va-button>
+      <VaButton>
         Button
-      </va-button>
-    </va-badge>
+      </VaButton>
+    </VaBadge>
 
-    <va-badge
+    <VaBadge
       overlap
       text="5"
       placement="bottom-start"
     >
-      <va-button>
+      <VaButton>
         Button
-      </va-button>
-    </va-badge>
+      </VaButton>
+    </VaBadge>
 
-    <va-badge
+    <VaBadge
       overlap
       dot
       :offset="-5"
       text="5"
       placement="bottom-center"
     >
-      <va-icon name="&#xe0e1;" />
-    </va-badge>
+      <VaIcon name="&#xe0e1;" />
+    </VaBadge>
   </div>
 </template>

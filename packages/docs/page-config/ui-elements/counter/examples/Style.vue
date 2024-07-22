@@ -1,15 +1,15 @@
 <template>
   <div class="flex gap-8 flex-wrap">
-    <va-counter v-model="value" />
+    <VaCounter v-model="value" />
 
-    <va-counter
+    <VaCounter
       v-model="value"
-      outline
+      preset="solid"
     />
 
-    <va-counter
+    <VaCounter
       v-model="value"
-      bordered
+      preset="bordered"
     />
   </div>
 </template>

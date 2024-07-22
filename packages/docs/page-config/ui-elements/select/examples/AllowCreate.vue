@@ -1,38 +1,39 @@
 <template>
-  <div class="max-w-xs">
-    <va-select
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <VaSelect
       v-model="value"
-      class="mb-6"
       label="'true' mode and single select"
       :options="options"
       :track-by="(option) => option.id"
       allow-create
+      placeholder="Select an option"
       @create-new="addNewOption"
     />
-    <va-select
+    <VaSelect
       v-model="allowUniqueValue"
-      class="mb-6"
       label="'unique' mode and single select"
       :options="options"
       :track-by="(option) => option.id"
       allow-create="unique"
+      placeholder="Select an option"
       @create-new="addNewOption"
     />
-    <va-select
+    <VaSelect
       v-model="valueMultiple"
-      class="mb-6"
       label="'true' mode and multi select"
       :options="options"
       :track-by="(option) => option.id"
+      placeholder="Select an option"
       allow-create
       multiple
       @create-new="addNewOption"
     />
-    <va-select
+    <VaSelect
       v-model="allowUniqueValueMultiple"
       label="'unique' mode and multi select"
       :options="options"
       :track-by="(option) => option.id"
+      placeholder="Select an option"
       allow-create="unique"
       multiple
       @create-new="addNewOption"
@@ -47,10 +48,6 @@ export default {
     return {
       options: [
         { id: "0", text: "one", value: "one" },
-        { id: "1", text: "two", value: "two" },
-        { id: "2", text: "three", value: "three" },
-        { id: "3", text: "four", value: "four" },
-        { id: "4", text: "five", value: "five" },
       ],
       value: "",
       allowUniqueValue: "",

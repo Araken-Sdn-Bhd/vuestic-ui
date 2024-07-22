@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-xs">
-    <va-select
+    <VaSelect
       v-model="value"
       class="mb-6"
       label="Custom chips (first 3)"
@@ -8,36 +8,36 @@
       multiple
     >
       <template #content="{ value }">
-        <va-chip
+        <VaChip
           v-for="chip in value.slice(0, 3)"
           :key="chip"
           size="small"
           class="mr-1 my-1"
         >
           {{ chip }}
-        </va-chip>
+        </VaChip>
       </template>
-    </va-select>
+    </VaSelect>
 
-    <va-select
+    <VaSelect
       v-model="value"
       label="Removable chips"
       :options="options"
       multiple
     >
       <template #content="{ value }">
-        <va-chip
+        <VaChip
           v-for="chip in value"
           :key="chip"
           size="small"
           class="mr-1 my-1"
           closeable
-          @update:modelValue="deleteChip(chip)"
+          @update:model-value="deleteChip(chip)"
         >
           {{ chip }}
-        </va-chip>
+        </VaChip>
       </template>
-    </va-select>
+    </VaSelect>
   </div>
 </template>
 
@@ -57,7 +57,7 @@ export default {
         "eight",
         "nine",
       ],
-      value: [],
+      value: ["one", "two"],
     };
   },
   methods: {

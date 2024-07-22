@@ -1,13 +1,11 @@
 import { computed, Ref, unref, ComputedRef } from 'vue'
 
-import isFunction from 'lodash/isFunction.js'
-import kebab from 'lodash/kebabCase.js'
-
 import { isDev } from '../utils/env'
+import { camelCaseToKebabCase } from '../utils/text-case'
 
-type Key<Prefix extends string, ModifierKey extends string> = `${Prefix}--${ModifierKey | string}`
+type Key<Prefix extends string, ModifierKey extends string> = `${Prefix}--${ModifierKey}`
 
-type ClassesObject<Key extends string> = Record<Key, boolean>
+type ClassesObject<Key extends string> = Record<Key, boolean | undefined>
 
 type ComputedClasses<Key extends string> = ClassesObject<Key> & {
   // TODO: How to remove it from spread?
@@ -32,19 +30,19 @@ type ComputedClasses<Key extends string> = ClassesObject<Key> & {
  */
 export const useBem = <ModifierKey extends string, Prefix extends string>(
   prefix: Prefix,
-  modifiers: Record<ModifierKey, boolean> | Ref<Record<ModifierKey, boolean>> | (() => Record<ModifierKey, boolean>),
+  modifiers: Record<ModifierKey, boolean | undefined> | Ref<Record<ModifierKey, boolean | undefined>> | (() => Record<ModifierKey, boolean | undefined>),
 ) => {
   if (isDev && !prefix) {
     console.warn('You must pass the @param "prefix" to the useBem hook!')
   }
 
-  const modifiersList = computed(() => isFunction(modifiers) ? modifiers() : unref(modifiers))
+  const modifiersList = computed(() => typeof modifiers === 'function' ? modifiers() : unref(modifiers))
 
   const computedBemClassesObject = computed(() => {
     return Object
       .entries(unref(modifiersList))
       .reduce((classesObj: Record<string, boolean>, [modifierName, value]) => {
-        if (value) { classesObj[`${prefix}--${kebab(modifierName)}`] = true }
+        if (value) { classesObj[`${prefix}--${camelCaseToKebabCase(modifierName)}`] = true }
         return classesObj
       }, {})
   })

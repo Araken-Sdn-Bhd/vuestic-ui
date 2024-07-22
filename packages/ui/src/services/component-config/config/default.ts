@@ -5,21 +5,21 @@ export const getComponentsDefaultConfig = (): ComponentConfig =>
   ({
     VaIcon: {
       sizesConfig: {
-        defaultSize: 24,
+        defaultSize: 18,
         sizes: {
-          small: 16,
-          medium: 24,
-          large: 32,
+          small: 14,
+          medium: 18,
+          large: 24,
         },
       },
     },
     VaRating: {
       sizesConfig: {
-        defaultSize: 24,
+        defaultSize: 18,
         sizes: {
-          small: 16,
-          medium: 24,
-          large: 32,
+          small: 14,
+          medium: 18,
+          large: 24,
         },
       },
     },
@@ -61,6 +61,32 @@ export const getComponentsDefaultConfig = (): ComponentConfig =>
           hoverOpacity: 1,
           pressedBehavior: 'opacity',
           pressedOpacity: 0.9,
+        },
+      },
+      VaInputWrapper: {
+        solid: {
+          background: 'backgroundElement',
+        },
+        bordered: {
+          class: 'va-input-wrapper--bordered',
+          background: 'backgroundElement',
+        },
+      },
+      VaCheckbox: {
+        solid: {
+          style: '--va-checkbox-background: var(--va-background-element)',
+        },
+      },
+      VaRadio: {
+        solid: {
+          style: '--va-radio-background: var(--va-background-element)',
+        },
+      },
+      VaMenu: {
+        context: {
+          cursor: true,
+          placement: 'right-start',
+          trigger: 'right-click',
         },
       },
     },

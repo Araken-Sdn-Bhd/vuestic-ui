@@ -1,42 +1,42 @@
 <template>
   <div class="grid sm:grid-cols-2 gap-6 mb-6">
-    <va-select
+    <VaSelect
       v-model="selectMode"
       label="Select mode"
       :options="selectModeOptions"
     />
-    <va-select
+    <VaSelect
       v-model="selectedColor"
       label="Selected color"
       :options="selectColorOptions"
     />
   </div>
 
-  <va-data-table
+  <VaDataTable
     v-model="selectedItems"
     :items="items"
     :columns="columns"
     selectable
     :select-mode="selectMode"
     :selected-color="selectedColor"
-    @selectionChange="selectedItemsEmitted = $event.currentSelectedItems"
+    @selection-change="selectedItemsEmitted = $event.currentSelectedItems"
   />
 
-  <va-alert
+  <VaAlert
     class="!mt-6"
     color="info"
     outline
   >
     Selected items (click to unselect):
-    <va-chip
+    <VaChip
       v-for="item in selectedItemsEmitted"
       :key="item.id"
       class="ml-2"
       @click="unselectItem(item)"
     >
       {{ item.id }}
-    </va-chip>
-  </va-alert>
+    </VaChip>
+  </VaAlert>
 </template>
 
 <script>

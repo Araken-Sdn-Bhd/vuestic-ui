@@ -1,18 +1,18 @@
 <template>
-  <va-accordion
+  <VaAccordion
     v-model="value"
     class="max-w-sm"
   >
-    <va-collapse
+    <VaCollapse
       v-for="(collapse, index) in collapses"
       :key="index"
       :header="collapse.title"
     >
-      <div>
+      <template #content>
         {{ collapse.content }}
-      </div>
-    </va-collapse>
-  </va-accordion>
+      </template>
+    </VaCollapse>
+  </VaAccordion>
 </template>
 
 <script>
@@ -21,9 +21,9 @@ export default {
     return {
       value: [false, false, false],
       collapses: [
-        { title: "First collapse", content: "first collapse content" },
-        { title: "Second collapse", content: "second collapse content" },
-        { title: "Third collapse", content: "third collapse content" },
+        { title: "First collapse", content: "First collapse content" },
+        { title: "Second collapse", content: "Second collapse content" },
+        { title: "Third collapse", content: "Third collapse content" },
       ],
     };
   },

@@ -1,19 +1,19 @@
 <template>
   <div class="flex gap-8 flex-wrap">
-    <va-counter
+    <VaCounter
       v-model="value"
       buttons
     />
 
-    <va-counter
+    <VaCounter
       v-model="value"
-      outline
+      preset="solid"
       buttons
     />
 
-    <va-counter
+    <VaCounter
       v-model="value"
-      bordered
+      preset="bordered"
       buttons
     />
   </div>

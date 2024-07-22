@@ -98,4 +98,13 @@ export const getI18nConfigDefaults = () => ({
 
   /** Switch aria label */
   switch: 'Switch',
+
+  /** Input aria label */
+  inputField: 'Input field',
+
+  /** File Input message when file type is incorrect */
+  fileTypeIncorrect: 'File type is incorrect',
+
+  /** Select aria label */
+  select: 'Select an option',
 })

@@ -7,13 +7,13 @@
     @click="toggleSidebar"
     @keydown.enter="toggleSidebar"
   >
-    <va-icon-menu
+    <VaIconMenu
       v-if="minimized"
       aria-hidden="true"
       class="i-nav"
       :color="colors.primary"
     />
-    <va-icon-menu-collapsed
+    <VaIconMenuCollapsed
       v-else
       aria-hidden="true"
       class="i-nav"
@@ -24,8 +24,6 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue'
-
-import { useColors } from 'vuestic-ui'
 
 import VaIconMenu from './icons/VaIconMenu.vue'
 import VaIconMenuCollapsed from './icons/VaIconMenuCollapsed.vue'

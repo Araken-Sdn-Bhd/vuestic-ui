@@ -1,4 +1,5 @@
-import { computed, inject, onBeforeUnmount, onMounted, provide, Ref, ref, watch, WritableComputedRef } from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, provide, Ref, ref, watch, WritableComputedRef } from 'vue'
+import { warn } from '../../../utils/console'
 
 export const AccordionServiceKey = Symbol('AccordionService')
 
@@ -12,14 +13,13 @@ export interface AccordionProps extends AccordionItemProps {
   multiple: boolean,
 }
 
-export interface AccordionItem {
-  state: WritableComputedRef<boolean>
-}
+export type AccordionItem = {}
 
 export interface AccordionInject {
-  onItemMounted: (item: AccordionItem) => void,
-  onItemUnmounted: (item: AccordionItem) => void,
-  onItemChanged: (changedItem: AccordionItem) => void,
+  registerItem: (item: AccordionItem) => void,
+  unregisterItem: (item: AccordionItem) => void,
+  getItemValue: (item: AccordionItem) => boolean,
+  setItemValue: (item: AccordionItem, value: boolean) => void,
   props: Ref<AccordionItemProps>,
 }
 
@@ -27,42 +27,62 @@ export interface AccordionInject {
  * @param props
  * @param state array of states of all accordion items */
 export const useAccordion = (props: AccordionProps, state: WritableComputedRef<boolean[]>) => {
-  /** @notice items are reactive because they have reactive `state` inside */
-  let items: AccordionItem[] = []
+  const items = ref<AccordionItem[]>([])
 
-  const onItemMounted = (item: AccordionItem) => { items.push(item) }
-  const onItemUnmounted = (item: AccordionItem) => { items = items.filter((i) => i !== item) }
-  const onItemChanged = (changedItem: AccordionItem) => {
-    state.value = items
-      .map((item: AccordionItem) => {
-        if (item === changedItem) {
-          return item.state.value
-        }
+  /**
+   * In case if items count is bigger than state count, we need to fill state with false values
+   * In case if items count is smaller than state count, we assume that some items were not rendered yet
+   */
+  const makeState = () => {
+    const correctItemsCount = Math.max(items.value.length, state.value.length)
 
-        if (!props.multiple) {
-          item.state.value = false
-        }
-
-        return item.state.value
-      })
-  }
-
-  provide(AccordionServiceKey, {
-    isInsideAccordion: true,
-    onItemMounted,
-    onItemUnmounted,
-    onItemChanged,
-    props: computed(() => props),
-  })
-
-  const updateItemStates = () => {
-    items.forEach((item: AccordionItem, index: number) => {
-      item.state.value = state.value[index]
+    return Array.from({ length: correctItemsCount }, (_, index) => {
+      return state.value[index] ?? false
     })
   }
 
-  onMounted(updateItemStates)
-  watch(state, updateItemStates)
+  const getItemValue = (item: AccordionItem) => {
+    return state.value[items.value.indexOf(item)] ?? false
+  }
+
+  const onItemsChanged = () => {
+    state.value = makeState()
+  }
+
+  const registerItem = (item: AccordionItem) => {
+    items.value.push(item)
+    onItemsChanged()
+  }
+  const unregisterItem = (item: AccordionItem) => {
+    items.value = items.value.filter((i) => i !== item)
+    // Prevent recursive dom update on unmount (HRM)
+    nextTick(onItemsChanged)
+  }
+
+  const setItemValue = (item: AccordionItem, value: boolean) => {
+    const index = items.value.indexOf(item)
+    if (index === -1) {
+      warn('Accordion item is not registered yet')
+      return
+    }
+
+    if (!props.multiple) {
+      state.value = makeState().map((el, i) => {
+        if (i === index) { return value }
+        return false
+      })
+    } else {
+      state.value[index] = value
+    }
+  }
+
+  provide(AccordionServiceKey, {
+    registerItem,
+    unregisterItem,
+    getItemValue,
+    setItemValue,
+    props: computed(() => props),
+  })
 
   return { items }
 }
@@ -71,26 +91,28 @@ export const useAccordion = (props: AccordionProps, state: WritableComputedRef<b
  * Hook used in items that should react on VaAccordion changes
  * @param state shows if accordion item is open
  */
-export const useAccordionItem = (state: WritableComputedRef<boolean>) => {
-  const accordion = inject<AccordionInject>(AccordionServiceKey, {
-    props: ref({ inset: undefined, popout: undefined }),
-    onItemChanged: () => undefined,
-    onItemMounted: () => undefined,
-    onItemUnmounted: () => undefined,
+export const useAccordionItem = () => {
+  const accordion = inject<AccordionInject | undefined>(AccordionServiceKey, undefined)
+
+  if (!accordion) {
+    return { accordionProps: ref({} as AccordionProps) }
+  }
+
+  const item = {}
+
+  // Register in setup function, before item is mounted,
+  // otherwise item will be rendered with own value
+  // and re-rendered with accordion value after mounted
+  accordion.registerItem(item)
+  onBeforeUnmount(() => accordion.unregisterItem(item))
+
+  const accordionItemValue = computed({
+    get: () => accordion.getItemValue(item),
+    set: (value) => accordion.setItemValue(item, value),
   })
 
-  const item = { state }
-
-  onMounted(() => accordion.onItemMounted(item))
-  onBeforeUnmount(() => accordion.onItemUnmounted(item))
-
   return {
+    accordionItemValue,
     accordionProps: accordion.props,
-
-    toggle: () => {
-      /** Toggle collapse value and notify accordion about it */
-      state.value = !state.value
-      accordion.onItemChanged(item)
-    },
   }
 }

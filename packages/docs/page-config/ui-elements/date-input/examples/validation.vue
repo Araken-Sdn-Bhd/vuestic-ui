@@ -1,20 +1,18 @@
 <template>
-  <div class="flex items-start">
-    <va-date-input
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+    <VaDateInput
       v-model="value"
-      class="mr-6"
       label="Success"
       success
     />
 
-    <va-date-input
+    <VaDateInput
       v-model="value"
-      class="mr-6"
       label="Error"
       error
     />
 
-    <va-date-input
+    <VaDateInput
       v-model="value"
       label="With rules"
       :rules="validationRules"

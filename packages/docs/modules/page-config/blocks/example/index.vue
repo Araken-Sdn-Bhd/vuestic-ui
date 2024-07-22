@@ -78,21 +78,22 @@ const sourceComputed = computed(() => props.customCode?.source || props.source);
   </template>
 
   <div class="page-config-example">
-    <va-card
+    <VaCard
       outlined
       class="page-config-example__card"
       color="background-primary"
     >
-      <va-card-content>
+      <VaCardContent>
         <component :is="component" />
-      </va-card-content>
-    </va-card>
+      </VaCardContent>
+    </VaCard>
     <ExampleFooter
       v-model:show-code="showCode"
       class="-mt-1"
       :code="sourceComputed"
       :git-link="gitLink"
       :hide-show-code-button="forceShowCode || hideCode"
+      :config="codesandboxConfig"
     />
 
     <template v-if="(showCode && !hideCode) || forceShowCode">

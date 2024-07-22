@@ -5,10 +5,10 @@ import { isNilValue } from '../../../utils/isNilValue'
 import type { SelectOption } from '../types'
 
 export const useMaxVisibleOptionsProps = {
-  maxVisibleOptions: { type: Number, default: 0 },
+  maxVisibleOptions: { type: Number || String, default: 0 },
 }
 
-type UseMaxVisibleOptionsProps = ExtractPropTypes<typeof useMaxVisibleOptionsProps> & { multiple: boolean, modelValue: SelectOption | SelectOption[] }
+type UseMaxVisibleOptionsProps = ExtractPropTypes<typeof useMaxVisibleOptionsProps> & { multiple: boolean, modelValue?: SelectOption | SelectOption[] }
 
 export const useMaxVisibleOptions = (
   props: UseMaxVisibleOptionsProps,

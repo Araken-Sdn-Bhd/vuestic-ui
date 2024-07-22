@@ -1,28 +1,26 @@
 <template>
-  <va-accordion
+  <VaAccordion
     v-model="value"
     class="max-w-sm"
   >
-    <va-collapse
+    <VaCollapse
       v-for="(group, idx) in items"
       :key="idx"
       :header="group.title"
-      text-color="textPrimary"
-      color="textInverted"
-      flat
+      body-color="background-element"
     >
-      <div class="pt-0 px-4 pb-3">
-        <router-link
+      <template #body>
+        <RouterLink
           v-for="(navItem, idx) in group.items"
           :key="idx"
           class="nav-item"
           :to="navItem.to"
         >
           {{ navItem.label }}
-        </router-link>
-      </div>
-    </va-collapse>
-  </va-accordion>
+        </RouterLink>
+      </template>
+    </VaCollapse>
+  </VaAccordion>
 </template>
 
 <script>
@@ -60,19 +58,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.va-collapse + .va-collapse {
-  border-top: 1px solid var(--va-background-element);
-}
-
 .nav-item {
-  padding: 0.5rem;
   display: flex;
   flex-direction: column;
-  color: black !important;
+  padding: var(--va-collapse-padding);
   transition: all 0.2s ease-in;
 
   &:hover {
-    background-color: #c0c0c0;
+    background-color: var(--va-background-element);
   }
 }
 </style>

@@ -1,43 +1,47 @@
 <template>
-  <div class="docs-layout" :key="isMounted + ''">
-    <div v-if="!isMounted" class="docs-layout__loader" />
+  <div
+    class="docs-layout"
+  >
     <div
-      ref="header"
-      class="docs-layout__header"
+      v-if="false"
+      class="docs-layout__loader"
+    />
+    <VaLayout
+      :top="{ fixed: true, order: 2 }"
+      :left="{ fixed: true, absolute: breakpoints.smDown, overlay: breakpoints.smDown && isSidebarVisible, order: 1 }"
+      @left-overlay-click="isSidebarVisible = false"
     >
-      <LayoutHeader
-        v-model:isSidebarVisible="isSidebarVisible"
-        v-model:isOptionsVisible="isOptionsVisible"
-      />
-    </div>
-    <section
-      v-show="!isOptionsVisible"
-      class="docs-layout__main-section"
-    >
-      <aside class="docs-layout__sidebar">
+      <template #top>
+        <LayoutHeader
+          v-model:isSidebarVisible="isSidebarVisible"
+          v-model:isOptionsVisible="isOptionsVisible"
+        />
+      </template>
+
+      <template #left>
         <LayoutSidebar
           v-model:visible="isSidebarVisible"
-          :mobile="breakpoints.smDown"
+          :mobile="breakpoints.xs"
         />
-      </aside>
-      <main class="docs-layout__main-content">
-        <article class="docs-layout__page-content">
-          <slot />
-        </article>
-      </main>
-    </section>
+      </template>
+
+      <template #content>
+        <main class="docs-layout__main-content">
+          <article class="docs-layout__page-content">
+            <Suspense>
+              <NuxtPage />
+            </Suspense>
+          </article>
+        </main>
+      </template>
+    </VaLayout>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useColors } from 'vuestic-ui'
-import { useDocsScroll } from '../composables/useDocsScroll';
-import { useIsMounted } from 'vuestic-ui/src/composables/useIsMounted'
-
-const { currentPresetName } = useColors()
 const breakpoints = useBreakpoint()
 
-const isSidebarVisible = ref(false)
+const isSidebarVisible = ref(!breakpoints.smDown)
 const isOptionsVisible = ref(false)
 
 watch(() => breakpoints.smDown, (newValue: boolean) => {
@@ -69,8 +73,6 @@ useHead({
     { src: 'https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js', type: 'module' },
   ],
 })
-
-const isMounted = useIsMounted()
 </script>
 
 <style lang="scss">
@@ -87,10 +89,6 @@ html {
 }
 
 .docs-layout {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
   font-family: var(--va-font-family);
 
   &__loader {
@@ -103,12 +101,6 @@ html {
     background: var(--va-background-primary);
   }
 
-  &__header {
-    width: 100%;
-    background: var(--va-white);
-    z-index: 99;
-  }
-
   &__main-section {
     display: flex;
     flex-grow: 2;
@@ -116,24 +108,11 @@ html {
     position: relative;
   }
 
-  &__sidebar {
-    height: 100%;
-    min-width: fit-content;
-    overflow-y: auto;
-    overflow-x: unset;
-
-    @include va-scroll(var(--va-primary));
-  }
-
   &__main-content {
     width: 100%;
-    overflow-y: scroll;
-    overflow-x: hidden;
     display: flex;
     justify-content: center;
     background: var(--va-background-primary);
-
-    @include va-scroll(var(--va-primary));
   }
 
   &__page-content {

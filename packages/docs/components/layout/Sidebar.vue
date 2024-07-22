@@ -1,74 +1,84 @@
 <template>
-  <va-sidebar
+  <VaSidebar
     v-model="writableVisible"
     class="sidebar"
     :width="sidebarWidth"
   >
-    <va-accordion
+    <VaAccordion
       v-model="value"
       multiple
     >
-      <va-collapse
+      <VaCollapse
         v-for="(route, key) in navigationRoutes"
         :key="key"
       >
-        <template #header="{ value: isCollapsed, hasKeyboardFocus }">
-          <va-sidebar-item
+        <template #header="{ value: isCollapsed }">
+          <VaSidebarItem
             class="sidebar__collapse-custom-header"
             :class="{
               'sidebar__collapse-custom-header--active': routeHasActiveChild(route),
-              'sidebar__collapse-custom-header--keyboard-focused': hasKeyboardFocus
             }"
+            hover-opacity="0.07"
+            border-color="transparent"
           >
-            {{ route.displayName }}
-            <va-icon :name="isCollapsed ? 'va-arrow-up' : 'va-arrow-down'" />
-          </va-sidebar-item>
+            <VaBadge
+              placement="right-center"
+              size="small"
+              offset="5px"
+              :text="route.meta?.badge?.text"
+              :color="route.meta && route.meta.badge && badgeColors[route.meta.badge.type]"
+            >
+              {{ route.displayName }}
+            </VaBadge>
+            <VaIcon :name="isCollapsed ? 'va-arrow-up' : 'va-arrow-down'" />
+          </VaSidebarItem>
         </template>
-        <div
-          v-for="(childRoute, index) in route.children"
-          :key="index"
-          class="va-sidebar__child"
-        >
-          <va-list-label
-            v-if="childRoute.category"
-            class="va-sidebar__child__label"
-            color="secondary"
+        <template #body>
+          <div
+            v-for="(childRoute, index) in route.children"
+            :key="index"
+            class="va-sidebar__child"
           >
-            {{ childRoute.category }}
-          </va-list-label>
-          <va-sidebar-item
-            :to="childRoute.path ? childRoute.path : `/${route.name}/${childRoute.name}`"
-            :active="isActiveChildRoute(childRoute, route)"
-            :hover-color="hoverColor"
-            :border-color="activeColor"
-            active-color="#ffffff00"
-            @click="onSidebarItemClick"
-          >
-            <va-sidebar-item-content>
-              <va-sidebar-item-title>
-                <va-badge
-                  placement="right-center"
-                  size="small"
-                  offset="5px"
-                  :text="childRoute.meta?.badge?.text"
-                  :color="childRoute.meta && childRoute.meta.badge && badgeColors[childRoute.meta.badge.type]"
-                >
-                  {{ childRoute.displayName }}
-                </va-badge>
-              </va-sidebar-item-title>
-            </va-sidebar-item-content>
-          </va-sidebar-item>
-        </div>
-      </va-collapse>
-    </va-accordion>
-  </va-sidebar>
+            <VaListLabel
+              v-if="childRoute.category"
+              class="va-sidebar__child__label"
+              color="secondary"
+            >
+              {{ childRoute.category }}
+            </VaListLabel>
+            <VaSidebarItem
+              :to="childRoute.path ? childRoute.path : `/${route.name}/${childRoute.name}`"
+              :active="isActiveChildRoute(childRoute, route)"
+              :hover-color="hoverColor"
+              border-color="transparent"
+              active-color="#ffffff00"
+              hover-opacity="0.07"
+              @click="onSidebarItemClick"
+            >
+              <VaSidebarItemContent>
+                <VaSidebarItemTitle>
+                  <VaBadge
+                    placement="right-center"
+                    size="small"
+                    offset="5px"
+                    :text="childRoute.meta?.badge?.text"
+                    :color="childRoute.meta && childRoute.meta.badge && badgeColors[childRoute.meta.badge.type]"
+                  >
+                    {{ childRoute.displayName }}
+                  </VaBadge>
+                </VaSidebarItemTitle>
+              </VaSidebarItemContent>
+            </VaSidebarItem>
+          </div>
+        </template>
+      </VaCollapse>
+    </VaAccordion>
+  </VaSidebar>
 </template>
 
 <script lang="ts">
 import { defineComponent, watch, ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-
-import { useColors } from 'vuestic-ui/src/main'
 
 import { NavigationRoute, navigationRoutes } from '@/page-config/navigationRoutes'
 
@@ -136,7 +146,7 @@ export default defineComponent({
       })
     }
 
-    const sidebarWidth = computed(() => props.mobile ? '100%' : '16rem')
+    const sidebarWidth = computed(() => props.mobile ? '100dvw' : '16rem')
 
     const onSidebarItemClick = () => {
       if (props.mobile) {
@@ -163,13 +173,11 @@ export default defineComponent({
 })
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "vuestic-ui/src/styles/resources";
 @import "@/assets/smart-grid.scss";
 
 .sidebar {
-  --va-sidebar-transition: none;
-
   &__collapse-custom-header {
     position: relative;
     padding: 1rem 1.2rem;
@@ -181,19 +189,7 @@ export default defineComponent({
     font-size: 16px;
     line-height: 20px;
     cursor: pointer;
-    font-weight: bold;
-
-    &:hover {
-      ::before {
-        opacity: 0.2;
-      }
-    }
-
-    &--keyboard-focused {
-      ::before {
-        opacity: 0.3;
-      }
-    }
+    font-weight: 600;
 
     &--active {
       color: var(--va-primary) !important;
@@ -205,18 +201,7 @@ export default defineComponent({
     height: 100%;
     color: var(--va-dark, #323742);
 
-    @include media-breakpoint-down(sm) {
-      z-index: 100;
-      position: absolute;
-    }
-
-    .va-sidebar-item-content {
-      cursor: pointer;
-    }
-
     .va-sidebar-item {
-      cursor: pointer;
-
       &--active {
         color: var(--va-primary) !important;
       }

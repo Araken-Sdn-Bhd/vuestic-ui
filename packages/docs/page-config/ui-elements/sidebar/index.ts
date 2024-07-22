@@ -11,13 +11,17 @@ export default definePageConfig({
       title: "Default",
       description: "Default usage of `va-sidebar`"
     }),
+    block.example("Programmatically", {
+      title: "Sidebar items from config",
+      description: "Usually you want to store sidebar items in config and render them programmatically. In example below you can learn how to conditionally render sidebar items using `VaAccordion`, `VaCollapse` and `VaSidebarItem` components."
+    }),
     block.example("Minimized", {
       title: "Minimized",
       description: "You can minimize sidebar using `minimized` prop"
     }),
     block.example("Width", {
       title: "Width",
-      description: "Define custom width of sidebar in maximixed state."
+      description: "Define custom width of sidebar in maximized state."
     }),
     block.example("MinimizedWidth", {
       title: "Minimized width",

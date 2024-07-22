@@ -13,6 +13,7 @@ import {
   ComponentMeta,
 } from './types';
 import commonDescription from "./common-description";
+import { Anchor } from "../shared/anchor";
 
 const props = defineProps({
   componentName: {
@@ -42,6 +43,13 @@ const props = defineProps({
   descriptionOptions: {
     type: Object as PropType<APIDescriptionOptions>,
     required: true,
+  },
+  changeLog: {
+    type: Array as PropType<{
+      version: string,
+      changes: string[],
+    }[]>,
+    default: () => [],
   }
 })
 
@@ -136,16 +144,18 @@ const methodsOptions = computed(() => Object
 
 const cssVariablesOptions = computed(() => props.cssVariables.map(([name, value, comment]) => ({
   name, value, /* comment */ // TODO: Enable comment when everywhere is used correct comments
-  // TODO: Or add tanslations after i18n splitted
+  // TODO: Or add translations after i18n splitted
 })))
 
 const isValueIsDefaultTranslation = (value: String) => {
   return value.startsWith('`"$t:');
 }
+
+const changeLogValue = ref(true)
 </script>
 
 <template>
-  <va-content>
+  <VaContent>
     <ApiTable
       v-if="propsOptions.length > 0 && !visualOptions.hideProps"
       :title="visualOptions.hidePropsTitle ? '' : 'Props'"
@@ -154,7 +164,7 @@ const isValueIsDefaultTranslation = (value: String) => {
     >
       <template #name="{ value, row }">
         <strong>{{ value }}</strong>
-        <va-badge
+        <VaBadge
           v-if="row.required"
           class="ml-2"
           text="required"
@@ -165,23 +175,23 @@ const isValueIsDefaultTranslation = (value: String) => {
         #default="{value}"
       >
         <div class="flex items-center gap-1">
-          <markdown-view :content="value" />        
-          <va-popover
+          <MarkdownView :content="value" />
+          <VaPopover
             placement="right"
             trigger="click"
           >
-            <va-icon
+            <VaIcon
               v-if="isValueIsDefaultTranslation(value)"
               name="info"
               color="secondary"
             />
             <template #body>
-              <nuxt-link to="/services/i18n#translations">
+              <NuxtLink to="/services/i18n#translations">
                 Read more
-              </nuxt-link>
+              </NuxtLink>
             </template>
-          </va-popover>
-        </div> 
+          </VaPopover>
+        </div>
       </template>
     </ApiTable>
 
@@ -219,5 +229,105 @@ const isValueIsDefaultTranslation = (value: String) => {
         <span class="va-text-code va-text-secondary">{{ value }}</span>
       </template>
     </ApiTable>
-  </va-content>
+  </VaContent>
+  <VaCollapse
+    v-if="$props.changeLog && $props.changeLog.length > 0"
+    v-model="changeLogValue"
+    class="mt-8 page-config-api-change-log"
+  >
+    <template #header="{ bind }">
+      <div class="page-config-api-change-log__title" v-bind="bind">
+        <h4 class="va-h4">
+          Change log
+          <Anchor text="Change log" />
+        </h4>
+        <VaIcon name="va-arrow-down" />
+      </div>
+    </template>
+
+    <template #content>
+      <div class="page-config-api-change-log__content pt-4">
+        <div v-for="{ version, changes } in $props.changeLog" :key="version" class="page-config-api-change-log__version-wrapper">
+          <div class="page-config-api-change-log__version">
+            <VaIcon name="rocket_launch" class="mr-1" size="18px" color="secondary" />
+            <span>
+              <a :href="`https://github.com/epicmaxco/vuestic-ui/releases/tag/v${version}`">
+                v{{ version }}
+              </a>
+            </span>
+          </div>
+          <ul>
+            <li v-for="change in changes.filter(Boolean)" :key="change">
+              <div class="page-config-api-change-log__circle" />
+              <MarkdownView :content="change" />
+            </li>
+          </ul>
+        </div>
+      </div>
+    </template>
+  </VaCollapse>
 </template>
+
+<style lang="scss">
+.page-config-api-change-log {
+  margin-bottom: 2rem;
+
+  &__block {
+    padding: 1rem 0;
+  }
+
+  &__title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  li {
+    border-left: 2px solid var(--va-background-border);
+    padding: 0.1rem 2.5rem;
+    padding-left: 0;
+    margin: 0;
+    margin-left: 0.75rem;
+    margin-top: 0.75rem;
+    display: flex;
+
+    p, h6 {
+      margin: 0 !important;
+    }
+  }
+
+  &__version {
+    display: inline-flex;
+    align-items: center;
+    background: var(--va-background-element);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0;
+    font-weight: 600;
+  }
+
+  &__version-wrapper {
+    margin-top: 2rem;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  &__circle {
+    height: 12px;
+    width: 12px;
+    border-radius: 99999px;
+    background: var(--va-background-primary);
+    border: 2px solid var(--va-background-border);
+    margin-left: -7px;
+    margin-top: 0.45rem;
+    margin-right: 14px;
+  }
+
+  a {
+    color: var(--va-primary);
+  }
+}
+</style>

@@ -1,19 +1,20 @@
 <template>
-  <va-pagination
+  <VaPagination
     v-model="value"
-    class="mb-3"
+    class="mb-3 justify-center sm:justify-start"
     :pages="20"
     input
   />
-  <va-pagination
+  <VaPagination
     v-model="value"
-    class="mb-3"
+    class="mb-3 justify-center sm:justify-start"
     :pages="20"
     input
     buttons-preset="default"
   />
-  <va-pagination
+  <VaPagination
     v-model="value"
+    class="justify-center sm:justify-start"
     :pages="20"
     input
     buttons-preset="secondary"

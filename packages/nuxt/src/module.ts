@@ -9,23 +9,28 @@ import { useConfigFile } from './composables/use-config-file'
 
 import type { VuesticOptions } from './types'
 
+const VUESTIC_DEFAULT_CSS = ['smart-helpers', 'typography'] as VuesticOptions['css']
+
 export default defineNuxtModule<VuesticOptions>({
   meta: {
     name: '@vuestic/nuxt',
     configKey: 'vuestic',
     compatibility: {
-      nuxt: '^3.0.0-rc.8'
+      nuxt: '^3.3.0'
     }
   },
 
   defaults: {
     config: {},
-    css: ['smart-helpers', 'typography'],
+    css: [],
     fonts: true,
     themeCookieKey: 'vuestic-theme',
   },
 
   setup (options) {
+    if (Array.isArray(options.css) && options.css.length === 0) {
+      options.css = VUESTIC_DEFAULT_CSS
+    }
     useConfigFile()
     useVuesticCSS(options)
     useVuesticPlugin(options)

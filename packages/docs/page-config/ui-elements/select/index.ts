@@ -4,6 +4,7 @@ import apiDescription from './api-description';
 export default definePageConfig({
   blocks: [
     block.title("Select"),
+    block.tags('select', 'combobox'),
     block.paragraph("Select field components are used for collecting user provided information from a list of options. This component opens up a menu for the selection list and action."),
 
     block.subtitle("Examples"),
@@ -14,11 +15,15 @@ export default definePageConfig({
       description: "Select styles inherit from input styles"
     }),
     block.example("Variations", {
-      title: "Variants",
+      title: "Multiple select",
       description: "Includes single or multiple selects."
     }),
     block.example("Decorators", { title: "Decorators" }),
-    block.example("ObjectOptions", { title: "Objects as options" }),
+    block.example("ObjectOptions", {
+      title: "Objects as options",
+      description: "You can use objects as options. Text will be showing from `text-by` property from object. Value can be also returned from select using `value-by` instead of whole object. Comparing object values is done by `track-by` prop or `value-by` if it is not provided. <br /> *Note: Using `text-by` without a `value-by` or `track-by` may cause inconsistencies in expected behavior.*",
+    }),
+    block.alert("When using `Objects as options`, it's necessary to utilize `track-by` because ObjectOptions are compared by object reference by default. `track-by` allows resolving this comparison by either literal equality.", "warning", true),
     block.example("TrackBy", {
       title: "Track by",
       description: "Track by can be used if you have multiple options with same value."
@@ -57,12 +62,15 @@ export default definePageConfig({
     }),
     block.example("Autocomplete", {
       title: "Autocomplete",
-      description: "The `autocomplete` prop enables autocomplete behaviour for the `va-select`."
+      description: "The `autocomplete` prop enables autocomplete behavior for the `va-select`."
     }),
     block.example("IconOptions", {
       title:"Icon-selection",
       description: "The 'iconOption' property allows the addition of custom options to the select dropdown menu, each with an icon and a name."
     }),
+
+    block.subtitle("Accessibility"),
+    block.paragraph("Select has `combobox` role associated with `listbox` in dropdown menu. `aria-expanded` is applied if dropdown is opened. `aria-label` is set to `$t:selectOption` if value is selected and `$t:noSelectedOption` if value is empty. `aria-controls` is set to `combobox-controls-${id}`. `aria-labelledby` is set to `input-label-${id}`. `aria-describedby` is set to `input-character-count-${id}`. `aria-activedescendant` is set to `option-${id}`. `aria-autocomplete` is set to `list` if autocomplete is enabled. `aria-owns` is set to `combobox-controls-${id}`. `aria-haspopup` is set to `listbox`. `aria-disabled` is set to `true` if select is disabled. `aria-required` is set to `true` if select is required. `aria-invalid` is set to `true` if select is invalid. `aria-multiselectable` is set to `true` if select is multiple. `aria-readonly` is set to `true` if select is readonly."),
 
     block.headline("Keyboard navigation"),
     block.paragraph("By using `ARROW DOWN` and `ARROW UP` you can move between options"),

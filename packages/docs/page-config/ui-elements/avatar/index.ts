@@ -11,7 +11,8 @@ export default definePageConfig({
     block.subtitle("Examples"),
 
     block.example("Default", {
-      title: 'By default `va-avatar` is displayed as a circle container.'
+      title: 'Default',
+      description: 'By default `va-avatar` is displayed as a circle container.'
     }),
 
     block.example("WithImage", {
@@ -64,7 +65,9 @@ export default definePageConfig({
       description: "You can use `va-avatar-group` component to group avatars."
     }),
 
-    block.example("Accessibility"),
+    block.example("Accessibility", {
+      title: "Accessibility"
+    }),
     block.list([
       "When image used as source, provide its description to the `alt` prop.",
       "Use `title` attribute when icon name is passed.",

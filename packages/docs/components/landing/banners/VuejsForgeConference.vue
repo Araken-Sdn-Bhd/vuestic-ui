@@ -5,7 +5,7 @@
       target="_blank"
       title="Vue.js forge conference"
     >
-      <va-aspect-ratio
+      <VaAspectRatio
         :ratio="1600/72"
         :aria-hidden="true"
         :max-width="1350"
@@ -15,13 +15,15 @@
           src="/landing/forge-event-banner.png"
           alt=""
         >
-        <div @click.prevent="hide" class="event-banner__close" />
-      </va-aspect-ratio>
+        <div class="event-banner__close" @click.prevent="hide" />
+      </VaAspectRatio>
     </a>
   </div>
 </template>
 
 <script setup lang="ts">
+// @deprecated
+// see VuejsNation.vue
 import { ref } from 'vue'
 
 const officialPartnerCookie = useCookie('banner-closed')

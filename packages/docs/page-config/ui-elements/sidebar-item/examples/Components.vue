@@ -1,43 +1,45 @@
 <template>
-  <va-accordion
+  <VaAccordion
     v-model="accordionValue"
     multiple
   >
-    <va-collapse
+    <VaCollapse
       v-for="(route, idx) in items"
       :key="idx"
       :class="{ expanded: accordionValue[idx] && route.children }"
     >
       <template #header>
-        <va-sidebar-item
+        <VaSidebarItem
           :active="isRouteActive(route)"
           @click="setRouteActive(route)"
         >
-          <va-sidebar-item-content>
-            <va-sidebar-item-title>
+          <VaSidebarItemContent>
+            <VaSidebarItemTitle>
               {{ route.displayName }}
-            </va-sidebar-item-title>
-            <va-icon
+            </VaSidebarItemTitle>
+            <VaIcon
               v-if="route.children"
               :name="accordionValue[idx] ? 'expand_less' : 'expand_more'"
             />
-          </va-sidebar-item-content>
-        </va-sidebar-item>
+          </VaSidebarItemContent>
+        </VaSidebarItem>
       </template>
-      <va-sidebar-item
-        v-for="(child, index) in route.children"
-        :key="index"
-        :active="isRouteActive(child)"
-        @click="setRouteActive(child)"
-      >
-        <va-sidebar-item-content>
-          <va-sidebar-item-title>
-            {{ child.displayName }}
-          </va-sidebar-item-title>
-        </va-sidebar-item-content>
-      </va-sidebar-item>
-    </va-collapse>
-  </va-accordion>
+      <template #body>
+        <VaSidebarItem
+          v-for="(child, index) in route.children"
+          :key="index"
+          :active="isRouteActive(child)"
+          @click="setRouteActive(child)"
+        >
+          <VaSidebarItemContent>
+            <VaSidebarItemTitle>
+              {{ child.displayName }}
+            </VaSidebarItemTitle>
+          </VaSidebarItemContent>
+        </VaSidebarItem>
+      </template>
+    </VaCollapse>
+  </VaAccordion>
 </template>
 
 <script lang="ts">
@@ -52,7 +54,7 @@ declare type DemoRoute = {
 export default defineComponent({
   data() {
     return {
-      accordionValue: [false, true],
+      accordionValue: [false, false, true],
       items: [
         {
           name: "Home",
@@ -95,7 +97,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style>
 .expanded {
   background-color: var(--va-background-primary);
 }

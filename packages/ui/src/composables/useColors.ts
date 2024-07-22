@@ -1,5 +1,5 @@
 import type { ColorVariables, CssColor } from '../services/color'
-import { computed } from 'vue'
+import { capitalize, computed } from 'vue'
 import { useGlobalConfig } from '../services/global-config/global-config'
 import { warn } from '../utils/console'
 import { useCache } from './useCache'
@@ -21,7 +21,7 @@ import {
   normalizeColorName,
   type ColorInput,
 } from '../services/color/utils'
-import kebabCase from 'lodash/kebabCase'
+import { camelCaseToKebabCase } from '../utils/text-case'
 
 /**
  * You can add these props to any component by destructuring them inside props option.
@@ -44,7 +44,6 @@ export const useColors = () => {
   }
 
   const { globalConfig } = gc
-
   const colors = useReactiveComputed<ColorVariables>({
     get: () => globalConfig.value.colors!.presets[globalConfig.value.colors!.currentPresetName],
     set: (v: ColorVariables) => { setColors(v) },
@@ -72,10 +71,24 @@ export const useColors = () => {
       /**
        * Most default color - fallback when nothing else is found.
        */
-      defaultColor = getColors().primary
+      defaultColor = colors.primary
     }
 
-    const colors = getColors()
+    if (prop === 'transparent') {
+      return '#ffffff00'
+    }
+
+    if (prop === 'currentColor') {
+      return prop
+    }
+
+    if (prop?.startsWith('on')) {
+      const colorName = prop.slice(2)
+
+      if (colors[normalizeColorName(colorName)]) {
+        return getColor(getTextColor(getColor(colorName)), undefined, preferVariables)
+      }
+    }
 
     if (!prop) {
       prop = getColor(defaultColor)
@@ -112,8 +125,8 @@ export const useColors = () => {
       .keys(colors)
       .filter((key) => colors[key] !== undefined)
       .reduce((acc: Record<string, any>, colorName: string) => {
-        acc[`--${prefix}-${kebabCase(colorName)}`] = getColor(colors[colorName], undefined, true)
-        acc[`--${prefix}-on-${kebabCase(colorName)}`] = getColor(getTextColor(getColor(colors[colorName]!)), undefined, true)
+        acc[`--${prefix}-${camelCaseToKebabCase(colorName)}`] = getColor(colors[colorName], undefined, true)
+        acc[`--${prefix}-on-${camelCaseToKebabCase(colorName)}`] = getColor(getTextColor(getColor(colors[colorName]!)), undefined, true)
         return acc
       }, {})
   }
@@ -133,14 +146,19 @@ export const useColors = () => {
   }
 
   const computedDarkColor = computed(() => {
-    return getColorLightnessFromCache(getColor('textPrimary')) > globalConfig.value.colors.threshold ? 'textInverted' : 'textPrimary'
+    return getColorLightnessFromCache(getColor('textPrimary')) > (255 / 2) ? 'textInverted' : 'textPrimary'
   })
 
   const computedLightColor = computed(() => {
-    return getColorLightnessFromCache(getColor('textPrimary')) > globalConfig.value.colors.threshold ? 'textPrimary' : 'textInverted'
+    return getColorLightnessFromCache(getColor('textPrimary')) > (255 / 2) ? 'textPrimary' : 'textInverted'
   })
 
   const getTextColor = (color: ColorInput, darkColor?: string, lightColor?: string) => {
+    const onColorName = `on${capitalize(String(color))}`
+    if (colors[onColorName]) {
+      return colors[onColorName]
+    }
+
     darkColor = darkColor || computedDarkColor.value
     lightColor = lightColor || computedLightColor.value
     return getColorLightnessFromCache(color) > globalConfig.value.colors.threshold ? darkColor : lightColor
@@ -154,6 +172,7 @@ export const useColors = () => {
 
   const applyPreset = (presetName: string) => {
     globalConfig.value.colors!.currentPresetName = presetName
+
     if (!globalConfig.value.colors!.presets[presetName]) {
       return warn(`Preset ${presetName} does not exist`)
     }

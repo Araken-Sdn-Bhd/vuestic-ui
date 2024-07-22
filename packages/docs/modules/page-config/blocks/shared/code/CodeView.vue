@@ -1,29 +1,35 @@
 <template>
   <div>
-    <va-tabs
+    <VaTabs
       v-if="!isString"
       v-model="index"
       class="DocsCode__tabs"
     >
       <template #tabs>
-        <va-tab
+        <VaTab
           v-for="tab in tabs"
           :key="tab"
         >
           {{ tab }}
-        </va-tab>
+        </VaTab>
       </template>
-    </va-tabs>
-    <code-highlight-wrapper
-      :code="escapeVuesticImport(contents[index])"
-      :lang="$props.language"
-      class="DocsCode va-typography-block"
-    />
+    </VaTabs>
+    <div class="relative">
+      <CodeHighlightWrapper
+        :code="escapeVuesticImport(contents[index])"
+        :lang="$props.language"
+        class="DocsCode va-typography-block pr-12"
+      />
+      <VaButton preset="secondary" size="small" class="absolute right-2 top-2" @click="copyCode" :color="copyButtonColor">
+        Copy
+      </VaButton>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType, computed, ref, watch, nextTick } from "vue";
+import { getWindow } from 'vuestic-ui/src/utils/ssr'
 
 import CodeHighlightWrapper from "./CodeHighlightWrapper.vue";
 
@@ -88,7 +94,23 @@ export default defineComponent({
 
     const tabsColor = computed(() => currentPresetName.value === 'dark' ? colors.backgroundSecondary : colors.backgroundBorder)
 
+    const copyButtonColor = ref<'' | 'success' | 'danger'>()
+    const copyCode = async () => {
+      try {
+        await getWindow()?.navigator.clipboard.writeText(escapeVuesticImport(contents.value[index.value]))
+        copyButtonColor.value = 'success'
+      } catch (e: any) {
+        if (e.message === 'NotAllowedError') {
+          copyButtonColor.value = 'danger'
+        }
+      } finally {
+        setTimeout(() => copyButtonColor.value = '', 1000)
+      }
+    }
+
     return {
+      copyButtonColor,
+      copyCode,
       codeRed,
       codeGreen,
       codeCyan,

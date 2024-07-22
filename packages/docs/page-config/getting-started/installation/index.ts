@@ -16,14 +16,8 @@ export default definePageConfig({
     }, 'bash'),
     block.paragraph('`create-vuestic` provides three template: Vuestic Admin, create-vue and Nuxt. Templates can be configured to use specific features like tree-shaking or AG Grid theme.'),
 
-    block.subtitle("Vue CLI installation"),
-    block.paragraph("If you have app based on Vue CLI this is a way to install Vuestic UI. Works fine with vite or webpack. Prefer `create-vuestic` for new projects"),
-    block.alert("Installing Vuestic UI via the plugin would modify your `package.json` and `main.(js`&#124;`ts)` files, so make sure you’ve committed your code before proceeding to avoid data loss.", "warning"),
-    block.paragraph("First, make sure you've got [Vue CLI](https://cli.vuejs.org/guide/installation.html)[[target=_blank]] installed globally:"),
-    block.code("cli", "bash"),
-    block.paragraph("Notice also that the minimum supported version of Vue CLI is v4.0.0. In case you've got an older version installed, please, consider [upgrading](https://cli.vuejs.org/migrating-from-v3/#migrating-from-v3)[[target=_blank]] it."),
-    block.paragraph("If everything's fine then you can finally install the plugin with the following command (**don't forget to commit**):"),
-    block.code("vue add vuestic-ui", "bash"),
+    block.subtitle("Nuxt installation"),
+    block.link('Visit nuxt integration page', '/getting-started/nuxt#manual-installation'),
 
     block.subtitle("Manual installation"),
     block.paragraph("If you decide to install Vuestic UI manually, all you need to do is to install a NPM package, a couple of other necessary assets (such as fonts and CSS styles) and slightly modify your application's entry point (most probably `index.js` or `main.js`, depending on your setup)."),
@@ -48,6 +42,11 @@ export default definePageConfig({
     block.headline("Modify your application's entry point"),
     block.paragraph("Import both the styles and the plugin into your entry file. The plugin is used to automatically register all the components, directives and other stuff globally. If you don't want to register everything globally then check out the tree-shaking section below."),
     block.code("quick-start.ts"),
+    block.headline("Usage with Tailwind"),
+    block.paragraph('Projects using Tailwind need to import different CSS:'),
+    block.code("tailwind-css-import.ts"),
+    block.paragraph('`import \'vuestic-ui/css\'` adds few more styles in `reset.css` that may conflict with Tailwind which provides it\'s own reset.'),
+    block.paragraph('For more information on usage with Tailwind see [Tailwind Integration](/styles/tailwind).'),
 
     block.headline("Migration guide"),
 

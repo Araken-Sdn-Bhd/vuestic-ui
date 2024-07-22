@@ -1,39 +1,30 @@
 <template>
-  <div class="max-w-xs">
-    <va-input
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-start">
+    <VaInput
       v-model="value"
-      class="mb-6"
       :rules="[(v) => v.length > 3 || `Fulfill the condition`]"
       label="Email"
       placeholder="Type more than 3 symbols"
     />
-    <va-input
+    <VaInput
       v-model="value"
-      class="mb-6"
       label="Email"
       placeholder="Error state"
       error
     />
-    <va-input
+    <VaInput
       v-model="value"
-      class="mb-6"
-      label="Email"
-      placeholder="Success state"
-      success
-    />
-    <va-input
-      v-model="value"
-      class="mb-6"
       label="Email"
       placeholder="Error with message"
+      immediate-validation
       error
       :error-messages="errorMessage"
     />
-    <va-input
+    <VaInput
       v-model="value"
-      class="mb-6"
       label="Email"
       placeholder="Success with message"
+      immediate-validation
       removable
       success
       :messages="successMessage"

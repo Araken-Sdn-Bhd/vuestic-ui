@@ -30,7 +30,6 @@
 @mixin va-disabled() {
   cursor: default;
   opacity: 0.4;
-  pointer-events: none;
   user-select: none;
 }
 
@@ -153,10 +152,20 @@
     background: $color;
     opacity: 0.3;
     border-radius: 2px;
+    transition: background 0.3s ease-in-out;
   }
 
   scrollbar-color: $color transparent;
   scrollbar-width: thin;
+  transition: scrollbar-color 0.3s ease-in-out;
+}
+
+@mixin va-scroll-color($color: var(--va-background-element)) {
+  scrollbar-color: $color transparent;
+
+  &::-webkit-scrollbar-thumb {
+    background: $color;
+  }
 }
 
 @mixin va-background($color, $opacity: 1, $index: -1) {

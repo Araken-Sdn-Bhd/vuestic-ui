@@ -8,19 +8,21 @@ export default definePageConfig({
     block.list([
       "Fork Vuestic repository",
       "Clone your fork",
-      "Install dependencies with `yarn install`",
+      "Install dependencies with [yarn](https://classic.yarnpkg.com/lang/en/docs/install) using `yarn install`",
     ]),
 
     block.subtitle("Packages"),
-    block.paragraph("Vuestic has few packages in order of importance for newcommers:"),
+    block.paragraph("Vuestic has few packages in order of importance for newcomers:"),
     block.list([
       "`packages/ui` - UI lib with demos. Here all vuestic components stored.",
-      "`packages/docs` - [vuestic.dev](https://vuestic.dev) source code.",
+      "`packages/docs` - [ui.vuestic.dev](https://vuestic.dev) source code.",
       "`packages/nuxt` - `@vuestic/nuxt` module for Nuxt3.",
       "`packages/sandbox` - Package for testing build and treeshaking.",
-      "`packages/vue-cli-plugin` - vue add vuestic-ui plugin for vue-cli.",
+      "`packages/tailwind` - Tailwind utilities.",
       "`packages/ag-grid-theme` - AgGrid extension styles.",
-      "`packages/deploy` - Release scripts for core contributors."
+      "`packages/vue-cli-plugin` - vue add vuestic-ui plugin for vue-cli [deprecated].",
+      "`packages/bundlers-tests` - package used for testing vuestic ui in different bundlers in CI.",
+      "`packages/deploy` - Release scripts for core contributors.",
     ]),
     block.paragraph("Likely you will deal only with `ui` and `docs` packages."),
 
@@ -32,10 +34,9 @@ export default definePageConfig({
 
     block.subtitle("Commonly used scripts"),
     block.list([
-      "`yarn serve` - this will run project with demos, where you can test component features.",
+      "`yarn serve:storybook` - this will run project with demos, where you can test component features.",
       "`yarn serve:docs` - this will run project with docs (deployed here [vuestic.dev](https://vuestic.dev)).",
-      "`yarn generate:docspage` - this will generate docs page, so you can write some guide or tutorial.",
-      "`yarn generate:component` - this will make component template with docs page and demo page, so you can easily start making new component."
+      "`yarn build` - this will build vuestic-ui package.",
     ]),
     block.paragraph("You can find more scripts in `package.json` of each package."),
 
@@ -66,7 +67,7 @@ export default definePageConfig({
       "We use [yarn](https://yarnpkg.com/lang/en/)[[target=_blank]] for package management.",
       "Be proactive. If you think something is wrong - create an issue or discuss.",
       "Recommended tools: [GitKraken](https://www.gitkraken.com/)[[target=_blank]], [WebStorm](https://www.jetbrains.com/webstorm/)[[target=_blank]], [ShareX](https://getsharex.com/)[[target=_blank]].",
-      `If you work on UI components - work in [storybook](${process.env.VITE_STORYBOOK_HOSTNAME})[[target=_blank]] environment (\`yarn serve:book\`). We want to keep global stuff out of components.`
+      `If you work on UI components - work in [storybook](${process.env.VITE_STORYBOOK_HOSTNAME})[[target=_blank]] environment (\`yarn serve:storybook\`). We want to keep global stuff out of components.`
     ]),
 
     block.subtitle("Credits"),

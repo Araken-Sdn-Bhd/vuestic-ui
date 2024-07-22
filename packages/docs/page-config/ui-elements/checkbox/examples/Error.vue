@@ -1,9 +1,9 @@
 <template>
-  <va-checkbox
+  <VaCheckbox
     v-model="value"
     error
     error-messages="Error message"
-    label="Error message"
+    label="Label"
   />
 </template>
 
